@@ -16,6 +16,36 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegisterSerializer
     permission_classes = [permissions.AllowAny]
+
+class ProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        serializer = ProfileSerializer(request.user)
+        return Response(serializer.data)
+
+    def put(self, request):
+        user = request.user
+        data = request.data
+        current_password = data.get('current_password')
+        if not current_password or not user.check_password(current_password):
+            return Response({"detail": "Contraseña actual requerida para actualizar."}, status=status.HTTP_400_BAD_REQUEST)
+
+        allowed = ['first_name', 'last_name']
+        for field in allowed:
+            if field in data:
+                setattr(user, field, data[field])
+
+        new_secret = data.get('secret_answer')
+        if new_secret:
+            user.set_secret_answer(new_secret)
+
+        new_password = data.get('new_password')
+        if new_password:
+            user.set_password(new_password)
+
+        user.save()
+        return Response(ProfileSerializer(user).data)
     
 class PasswordResetEmailView(APIView):
     permission_classes = [permissions.AllowAny]
