@@ -16,13 +16,15 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-p%0i7ba-di$7(*bg!ba$t-xm(zod4xf#%$*l4-3ux_%1p!c7z&'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+#SECRET_KEY = 'django-insecure-p%0i7ba-di$7(*bg!ba$t-xm(zod4xf#%$*l4-3ux_%1p!c7z&'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -54,7 +56,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
