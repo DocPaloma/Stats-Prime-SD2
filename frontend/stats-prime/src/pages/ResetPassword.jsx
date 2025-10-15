@@ -1,19 +1,33 @@
 import { useState } from "react";
+import { useNavigate, userSearchParams } from "react-router-dom";
+import authApi from "../api/authApi";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import Button from "../components/ui/Button";
 
 export default function ResetPassword() {
+  const [params] = userSearchParams();
+  const token = params.get("token");
+  const navigate = useNavigate();
   const [form, setForm] = useState({ password: "", confirm: "" });
   const onChange = e => setForm({ ...form, [e.target.name]: e.target.value });
-  const onSubmit = e => {
+
+  const onSubmit = async (e) => {
     e.preventDefault();
     if (form.password !== form.confirm) {
       alert("Las contraseñas no coinciden");
       return;
     }
-    // TODO: enviar token + nueva contraseña al backend
+    
+    try {
+      await authApi.resetPasswordConfirm(token, form.password);
+      alert("Contraseña actualizada. Ya puedes iniciar sesión.");
+      navigate("/login");
+    } catch (err) {
+      alert("Error al actualizar la contraseña: " + (err.response?.data?.detail || err.message));
+      console.error(err);
+    }
   };
 
   return (

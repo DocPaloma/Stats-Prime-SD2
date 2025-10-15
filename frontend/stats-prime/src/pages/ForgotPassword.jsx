@@ -4,20 +4,57 @@ import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import Button from "../components/ui/Button";
+import authApi from "../api/authApi";
+
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
 
-    // TODO: aquí iría la llamada real al backend:
-    // await api.post('/auth/forgot-password', { email });
+    const onSubmit = async (e) => {
+      e.preventDefault();
+      setError("");
+      setSuccess("");
 
-    // Simulación del flujo: ir a la pantalla para definir nueva contraseña
-    navigate("/reset-password");
-  };
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        setError("Ingresa un correo válido.");
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const res = await authApi.forgotPassword(email);
+        const data = res.data;
+
+        if (data.secret_question) {
+          localStorage.setItem("reset_email", email);
+          localStorage.setItem("secret_question", data.secret_question);
+          navigate("/reset-password");
+        } else {
+          setSuccess(data.message || "Instrucciones enviadas a tu correo.");
+        }
+    } catch (err) {
+      setError(
+        err.response?.data?.detail ||
+        err.response?.data?.error ||
+        err.message ||
+        "No se pudo procesar la solicitud."
+      );
+    } finally {
+      setLoading(false);
+    }
+
+  }
+};
 
   return (
     <section className="grid place-items-center">
@@ -26,6 +63,9 @@ export default function ForgotPassword() {
         <p className="text-slate-400 text-sm mt-1">
           Te enviaremos instrucciones a tu correo.
         </p>
+
+        {error && <div className="alert-error mt-4">{error}</div>}
+        {success && <div className="alert-success mt-4">{success}</div>}
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
@@ -38,6 +78,7 @@ export default function ForgotPassword() {
             />
           </div>
           <Button className="w-full">Enviar instrucciones</Button>
+            {loading ? "Enviando..." : "Enviar instrucciones"}
         </form>
       </Card>
     </section>

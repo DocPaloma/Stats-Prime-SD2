@@ -4,19 +4,33 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
+import authApi from "../api/authApi";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
   const onChange = e => setForm({ ...form, [e.target.name]: e.target.value });
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const onSubmit = e => {
+
+
+  const onSubmit = async (e) => {
     e.preventDefault();
-    // TODO: reemplazar por llamada al backend; si OK:
-    login();
-    navigate("/");
+    try {
+      const res = await authApi.login(form.email, form.password);
+      const { access, refresh } = res.data;
+
+      localStorage.setItem("token", access);
+      localStorage.setItem("refresh", refresh);
+
+      login();
+      navigate("/");
+    } catch (err) {
+      setError("Credenciales incorrectas o error de conexión" + err.message);
+      console.error(err);
+    }
   };
 
   return (
