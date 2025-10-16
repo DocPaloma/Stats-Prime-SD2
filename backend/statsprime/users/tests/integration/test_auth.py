@@ -1,32 +1,46 @@
-import pytest
+from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-@pytest.mark.django_db
-class TestAuthFlow:
 
-    def setup_method(self):
+class AuthFlowTestCase(TestCase):
+    """Prueba de integración: registro y login de usuario."""
+
+    def setUp(self):
+        # Se ejecuta antes de cada test
         self.client = APIClient()
 
     def test_register_and_login(self):
-        # Registro
+        """Verifica el flujo completo de registro y login."""
+
+        # 1️⃣ Registro
         register_url = reverse('users:register')
         payload = {
             "email": "nuevo@correo.com",
             "password": "StrongPass123!",
             "name": "Usuario Test"
         }
-        res = self.client.post(register_url, payload, format='json')
-        assert res.status_code == 201, res.data
-        assert "email" in res.data
 
-        # Login
+        response = self.client.post(register_url, payload, format='json')
+
+        self.assertEqual(
+            response.status_code, 201,
+            f"El registro debería responder 201, obtuvo {response.status_code}: {response.data}"
+        )
+        self.assertIn("email", response.data, "La respuesta debe incluir el email del usuario registrado.")
+
+        # 2️⃣ Login
         login_url = reverse('users:token_obtain_pair')
         login_payload = {
             "email": "nuevo@correo.com",
             "password": "StrongPass123!"
         }
-        res = self.client.post(login_url, login_payload, format='json')
-        assert res.status_code == 200, res.data
-        assert "access" in res.data
-        assert "refresh" in res.data
+
+        response = self.client.post(login_url, login_payload, format='json')
+
+        self.assertEqual(
+            response.status_code, 200,
+            f"El login debería responder 200, obtuvo {response.status_code}: {response.data}"
+        )
+        self.assertIn("access", response.data, "La respuesta debe incluir el token de acceso.")
+        self.assertIn("refresh", response.data, "La respuesta debe incluir el token de refresco.")
