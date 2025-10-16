@@ -54,8 +54,8 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-2">
             <NavLink to="/" className={link}>Home</NavLink>
             {isAuth && <NavLink to="/stats" className={link}>Stats</NavLink>}
-            {!isAuth && <NavLink to="/login" className={link}>Login</NavLink>}
-            {!isAuth && <NavLink to="/register" className={link}>Register</NavLink>}
+            {!isAuth && <NavLink to="/login" className={link}>Iniciar sesión</NavLink>}
+            {!isAuth && <NavLink to="/register" className={link}>Registrarse</NavLink>}
             {isAuth && <NavLink to="/profile" className={link}>Perfil</NavLink>}
             {isAuth && (
               <button
@@ -88,8 +88,8 @@ export default function Navbar() {
             <div className="container-app py-2 flex flex-col gap-1">
               <NavLink to="/" className={link} onClick={() => setOpen(false)}>Home</NavLink>
               {isAuth && <NavLink to="/stats" className={link} onClick={() => setOpen(false)}>Stats</NavLink>}
-              {!isAuth && <NavLink to="/login" className={link} onClick={() => setOpen(false)}>Login</NavLink>}
-              {!isAuth && <NavLink to="/register" className={link} onClick={() => setOpen(false)}>Register</NavLink>}
+              {!isAuth && <NavLink to="/login" className={link} onClick={() => setOpen(false)}>Iniciar sesión</NavLink>}
+              {!isAuth && <NavLink to="/register" className={link} onClick={() => setOpen(false)}>Registrarse</NavLink>}
               {isAuth && <NavLink to="/profile" className={link} onClick={() => setOpen(false)}>Perfil</NavLink>}
               {isAuth && (
                 <button

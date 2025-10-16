@@ -7,15 +7,17 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .serializers import UserRegisterSerializer, ProfileSerializer
 
 User = get_user_model()
 
 class RegisterView(generics.CreateAPIView):
+    permission_classes = [permissions.AllowAny]
     queryset = User.objects.all()
     serializer_class = UserRegisterSerializer
-    permission_classes = [permissions.AllowAny]
+    
 
 class ProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]

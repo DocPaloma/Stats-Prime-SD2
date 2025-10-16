@@ -7,7 +7,7 @@ import Button from "../components/ui/Button";
 import authApi from "../api/authApi";
 
 export default function Register() {
-  const [form, setForm] = useState({ name: "", email: "", password: "", password2: "", first_name: "" , last_name: "" , secret_question: "", secret_answer: "" });
+  const [form, setForm] = useState({ username: "", email: "", password: "", password2: "", first_name: "" , last_name: "" , secret_question: "", secret_answer: "" });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -38,7 +38,7 @@ export default function Register() {
     setSuccess("");
 
     // Validaciones mínimas
-    if (!form.name.trim()) return setError("El nombre es obligatorio.");
+    if (!form.username.trim()) return setError("El nombre es obligatorio.");
     if (!/^\S+@\S+\.\S+$/.test(form.email)) return setError("Ingresa un correo válido.");
     if (form.password !== form.password2) return setError("Las contraseñas no coinciden.");
 
@@ -49,20 +49,28 @@ export default function Register() {
     try {
       setLoading(true);
 
-      const res = await authApi.register(form.username, form.email, form.password, form.password2, form.first_name, form.last_name, form.secret_question, form.secret_answer);
-
-      if (!res.ok) {
-        const data = await res.json();
-        const msg = Object.values(data).flat().join(" ");
-        throw new Error(data.detail || "Error en el registro");
-      }
+      const res = await authApi.register({
+        username: form.username,
+        email: form.email,
+        password: form.password,
+        password2: form.password2,
+        first_name: form.first_name,
+        last_name: form.last_name,
+        secret_question: form.secret_question,
+        secret_answer: form.secret_answer,
+      });
 
       setSuccess("Usuario creado con éxito. Redirigiendo al inicio de sesión…");
 
       // Redirigir después de un breve delay
       setTimeout(() => navigate("/login"), 2200);
     } catch (err) {
-      setError("No se pudo crear la cuenta. Intenta nuevamente.");
+      console.error("Error en registro:", err.response?.data || err.message);
+      setError(
+        err.response?.data?.detail ||
+        Object.values(err.response?.data || {}).join("") ||
+        "No se pudo crear la cuenta. Intenta nuevamente."
+      );
     } finally {
       setLoading(false);
     }
@@ -82,10 +90,10 @@ export default function Register() {
           <div>
             <Label>Nombre de usuario</Label>
             <Input
-              name="name"
+              name="username"
               value={form.username}
               onChange={onChange}
-              placeholder="Tu nombre"
+              placeholder="Tu nombre de usuario"
               required
             />
           </div>
