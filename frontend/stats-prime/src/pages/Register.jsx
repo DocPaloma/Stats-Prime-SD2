@@ -6,7 +6,7 @@ import Label from "../components/ui/Label";
 import Button from "../components/ui/Button";
 
 export default function Register() {
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "", secret_question: "", secret_answer: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", password2: "", first_name: "" , last_name: "" , secret_question: "", secret_answer: "" });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");

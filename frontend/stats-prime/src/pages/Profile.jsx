@@ -1,13 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { getUserProfile } from "../api/profileApi";
 
 export default function Profile() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const { logout } = useAuth();
+
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await getUserProfile(token);
+        setUser(data);
+      } catch (err) {
+        setError(err.message || "Error al cargar el perfil.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [token]);
 
   const handleDelete = () => {
     // TODO: llamada real al backend para eliminar cuenta
@@ -15,14 +34,25 @@ export default function Profile() {
     navigate("/");    // redirigir
   };
 
+  if (loading) return <p className="text-slate-400">Cargando perfil...</p>
+  if (error) return <p className="text-red-500">Error: {error}</p>
+
   return (
     <section className="space-y-6">
       <h1 className="title">Perfil</h1>
 
       <Card>
         <h2 className="font-semibold mb-2">Información</h2>
-        <p className="text-slate-400 text-sm">Nombre: Usuario Demo</p>
-        <p className="text-slate-400 text-sm">Email: demo@stats-prime.com</p>
+          (
+            <>
+              <p className="text-slate-400 text-sm">Nombre de usuario: {user.username || "No especificado"}</p>
+              <p className="text-slate-400 text-sm">Email: {user.email}</p>
+              <p className="text-slate-400 text-sm">Nombre: {user.first_name}</p>
+              <p className="text-slate-400 text-sm">Apellido: {user.last_name}</p>
+            </>
+          ) : (
+            <p className="text-slate-400 text-sm">No hay información disponible.</p>
+          )
       </Card>
 
       <Card>
