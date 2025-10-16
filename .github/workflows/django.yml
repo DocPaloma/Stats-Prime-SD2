@@ -65,13 +65,13 @@ jobs:
       - name: Run unitary tests
         working-directory: backend/statsprime
         run: |
-          pytest -v -m "not integration" --maxfail=1 --disable-warnings --cov=. --cov-report=xml --html=reports/unit_tests.html
+          python -m pytest -v -m "not integration" --maxfail=1 --disable-warnings --cov=. --cov-report=xml --html=reports/unit_tests.html
         continue-on-error: false
 
       - name: run integration tests
         working-directory: backend/statsprime
         run: |
-          pytest -v -m integration --maxfail=1 --disable-warnings --cov=. --cov-report=xml --html=reports/integrations_tests.html
+          python -m pytest -v -m integration --maxfail=1 --disable-warnings --cov=. --cov-report=xml --html=reports/integrations_tests.html
         continue-on-error: false
 
       - name: Upload test reports
