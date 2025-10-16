@@ -14,7 +14,6 @@ class PasswordResetFlowTestCase(TestCase):
             username="TestUser",
             email="prueba@correo.com",
             password="Password123!",
-            name="TestUser"
         )
 
     def test_password_reset_flow(self):

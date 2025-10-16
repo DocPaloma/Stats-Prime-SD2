@@ -19,6 +19,7 @@ class AuthFlowTestCase(TestCase):
             "username": "nuevo_usuario",
             "email": "nuevo@correo.com",
             "password": "StrongPass123!",
+            "password2": "StrongPass123!",
         }
 
         response = self.client.post(register_url, payload, format='json')
