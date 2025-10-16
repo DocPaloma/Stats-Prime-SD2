@@ -4,6 +4,7 @@ import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import Button from "../components/ui/Button";
+import authApi from "../api/authApi";
 
 export default function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "", password2: "", first_name: "" , last_name: "" , secret_question: "", secret_answer: "" });
@@ -39,7 +40,7 @@ export default function Register() {
     // Validaciones mínimas
     if (!form.name.trim()) return setError("El nombre es obligatorio.");
     if (!/^\S+@\S+\.\S+$/.test(form.email)) return setError("Ingresa un correo válido.");
-    if (form.password !== form.confirm) return setError("Las contraseñas no coinciden.");
+    if (form.password !== form.password2) return setError("Las contraseñas no coinciden.");
 
     const passwordError = validatePassword(form.password);
     if (passwordError) return setError(passwordError);
@@ -48,11 +49,7 @@ export default function Register() {
     try {
       setLoading(true);
 
-      const res = await fetch("https://localhost:8000/api/users/register/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await authApi.register(form.username, form.email, form.password, form.password2, form.first_name, form.last_name, form.secret_question, form.secret_answer);
 
       if (!res.ok) {
         const data = await res.json();
