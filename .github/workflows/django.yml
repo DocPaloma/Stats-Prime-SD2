@@ -72,9 +72,7 @@ jobs:
       - name: run integration tests
         working-directory: backend/statsprime
         run: |
-          python -m pytest users/tests/integration \
-            -v -m integration --maxfail=1 --disable-warnings \ 
-            --cov=. --cov-report=xml --html=reports/integrations_tests.html
+          python -m pytest users/tests/integration -v -m integration --maxfail=1 --disable-warnings --cov=. --cov-report=xml --html=reports/integrations_tests.html
         continue-on-error: false
 
       - name: Upload test reports
