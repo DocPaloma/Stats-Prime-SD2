@@ -61,7 +61,21 @@ jobs:
         run: |
           python manage.py migrate
 
-      - name: Run Django tests
+      #Pruebas unitarias
+      - name: Run unitary tests
         working-directory: backend/statsprime
         run: |
-          python manage.py test --verbosity=2
+          pytest -v -m "not integration" --maxfail=1 --disable-warnings --cov=. --cov-report=xml --html=reports/unit_tests.html
+        continue-on-error: false
+
+      - name: run integration tests
+        working-directory: backend/statsprime
+        run: |
+          pytest -v -m integration --maxfail=1 --disable-warnings --cov=. --cov-report=xml --html=reports/integrations_tests.html
+        continue-on-error: false
+
+      - name: Upload test reports
+        uses: actions/upload-artifacts@v4
+        with:
+          name: django-test-reports
+          path: backend/statsprime/reports/
