@@ -16,9 +16,9 @@ class AuthFlowTestCase(TestCase):
         # 1️⃣ Registro
         register_url = reverse('users:register')
         payload = {
+            "username": "nuevo_usuario",
             "email": "nuevo@correo.com",
             "password": "StrongPass123!",
-            "name": "Usuario Test"
         }
 
         response = self.client.post(register_url, payload, format='json')
