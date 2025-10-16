@@ -33,7 +33,7 @@ class AuthFlowTestCase(TestCase):
         # 2️⃣ Login
         login_url = reverse('users:token_obtain_pair')
         login_payload = {
-            "email": "nuevo@correo.com",
+            "username": "nuevo_usuario",
             "password": "StrongPass123!"
         }
 

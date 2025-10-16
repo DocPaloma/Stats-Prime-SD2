@@ -2,7 +2,7 @@ import axiosClient from "./axiosClient";
 
 const authApi = {
   // 🔐 Autenticación
-  login: (email, password) => axiosClient.post("login/", { email, password }),
+  login: (username, password) => axiosClient.post("login/", { username, password }),
   register: (data) => axiosClient.post("register/", data),
   refreshToken: (refresh) => axiosClient.post("token/refresh/", { refresh }),
 

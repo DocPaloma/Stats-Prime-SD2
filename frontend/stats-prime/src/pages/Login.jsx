@@ -8,7 +8,7 @@ import authApi from "../api/authApi";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const onChange = e => setForm({ ...form, [e.target.name]: e.target.value });
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ export default function Login() {
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await authApi.login(form.email, form.password);
+      const res = await authApi.login(form.username, form.password);
       const { access, refresh } = res.data;
 
       localStorage.setItem("token", access);
@@ -41,8 +41,8 @@ export default function Login() {
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
-            <Label>Correo</Label>
-            <Input type="email" name="email" value={form.email} onChange={onChange} required />
+            <Label>Nombre de usuario</Label>
+            <Input type="username" name="username" value={form.username} onChange={onChange} required />
           </div>
           <div>
             <Label>Contraseña</Label>

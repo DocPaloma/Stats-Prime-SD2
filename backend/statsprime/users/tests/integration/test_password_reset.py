@@ -25,17 +25,21 @@ class PasswordResetFlowTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200, "El endpoint de solicitud de reset debe responder 200")
 
-        # 2️⃣ Simular obtención del token y confirmación
+        # 2️⃣ Generar token real de restablecimiento (simulando correo)
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+
+        # 3️⃣ Enviar confirmación de cambio de contraseña
         reset_confirm_url = reverse('users:password_reset_confirm')
         response = self.client.post(reset_confirm_url, {
-            "email": self.user.email,
-            "token": "mock-token",  # normalmente el token vendría por correo
+            "uid": uid,
+            "token": token,
             "new_password": "NewPass123!"
         }, format='json')
 
         self.assertIn(
             response.status_code,
             [200, 202, 204],
-            "El endpoint de confirmación debe responder con un estado válido (200, 202 o 204)"
+            "El endpoint de confirmación debe responder con un estado válido (200, 202 o 204), obtuvo {response.status_code}: {response.data}"
         )
 
