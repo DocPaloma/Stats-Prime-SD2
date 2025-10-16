@@ -11,6 +11,7 @@ class PasswordResetFlowTestCase(TestCase):
         # Se ejecuta antes de cada test
         self.client = APIClient()
         self.user = User.objects.create_user(
+            username="TestUser",
             email="prueba@correo.com",
             password="Password123!",
             name="TestUser"
