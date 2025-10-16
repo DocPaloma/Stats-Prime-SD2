@@ -1,16 +1,29 @@
 import axios from 'axios';
 
 const axiosClient = axios.create({
-    baseURL: "https://localhost:8000/api/",
-    headers: {
-        'Content-Type': 'application/json',},
+    baseURL: "http://127.0.0.1:8000/api",
+    withCredentials: true,
     });
 
-    axiosClient.Interceptors.request.use((config) => {
-        const token = localStorage.getItem('token');
-        if (token) config.headers.Authorization = `Bearer ${token}`;
-        return config;
-    });
+    
+axiosClient.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+    },
+    (error) => Promise.reject(error)
+);
 
-    export default axiosClient;
+axiosClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            console.warn("No autorizado, redirigiendo al login...");
+            window.location.href = "/login";
+        }
+        return Promise.reject(error);
+    }
+)
+
+export default axiosClient;
     

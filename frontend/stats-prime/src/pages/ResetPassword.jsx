@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, userSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import authApi from "../api/authApi";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
@@ -7,7 +7,7 @@ import Label from "../components/ui/Label";
 import Button from "../components/ui/Button";
 
 export default function ResetPassword() {
-  const [params] = userSearchParams();
+  const [params] = useSearchParams();
   const token = params.get("token");
   const navigate = useNavigate();
   const [form, setForm] = useState({ password: "", confirm: "" });
