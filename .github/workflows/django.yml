@@ -63,5 +63,5 @@ jobs:
 
       - name: Run Django tests
         working-directory: backend/statsprime
-        run: echo "temporal output"
-          #python manage.py test --verbosity=2
+        run: |
+          python manage.py test --verbosity=2
