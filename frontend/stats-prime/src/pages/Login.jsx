@@ -22,10 +22,10 @@ export default function Login() {
       const res = await authApi.login(form.username, form.password);
       const { access, refresh } = res.data;
 
-      localStorage.setItem("token", access);
-      localStorage.setItem("refresh", refresh);
+      localStorage.setItem("accessToken", access);
+      localStorage.setItem("refreshToken", refresh);
 
-      login();
+      login(access);
       navigate("/");
     } catch (err) {
       setError("Credenciales incorrectas o error de conexión" + err.message);

@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { getUserProfile } from "../api/profileApi";
 
 export default function Profile() {
-  const [user, setUser] = useState(null);
+  const {isAuth} = useAuth();
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -15,18 +16,25 @@ export default function Profile() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!isAuth) {
+      navigate("/login");
+      return;
+    }
+
     const fetchProfile = async () => {
       try {
-        const data = await getUserProfile(token);
-        setUser(data);
+        const data = await getUserProfile();
+        setProfile(data);
       } catch (err) {
-        setError(err.message || "Error al cargar el perfil.");
+        setError("No se pudo cargar el perfil: " + err.message);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProfile();
-  }, [token]);
+  }, [isAuth, navigate]);
 
   const handleDelete = () => {
     // TODO: llamada real al backend para eliminar cuenta
@@ -36,6 +44,7 @@ export default function Profile() {
 
   if (loading) return <p className="text-slate-400">Cargando perfil...</p>
   if (error) return <p className="text-red-500">Error: {error}</p>
+  if (!profile) return <p className="text-slate-400">No hay datos de perfil disponibles.</p>
 
   return (
     <section className="space-y-6">
@@ -45,10 +54,10 @@ export default function Profile() {
         <h2 className="font-semibold mb-2">Información</h2>
           (
             <>
-              <p className="text-slate-400 text-sm">Nombre de usuario: {user.username || "No especificado"}</p>
-              <p className="text-slate-400 text-sm">Email: {user.email}</p>
-              <p className="text-slate-400 text-sm">Nombre: {user.first_name}</p>
-              <p className="text-slate-400 text-sm">Apellido: {user.last_name}</p>
+              <p className="text-slate-400 text-sm">Nombre de usuario: {profile.username || "No especificado"}</p>
+              <p className="text-slate-400 text-sm">Email: {profile.email}</p>
+              <p className="text-slate-400 text-sm">Nombre: {profile.first_name}</p>
+              <p className="text-slate-400 text-sm">Apellido: {profile.last_name}</p>
             </>
           ) : (
             <p className="text-slate-400 text-sm">No hay información disponible.</p>
