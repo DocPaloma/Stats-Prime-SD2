@@ -7,11 +7,11 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
-from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .serializers import UserRegisterSerializer, ProfileSerializer
 
 User = get_user_model()
+
 
 class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
@@ -25,15 +25,95 @@ class ProfileView(APIView):
     def get(self, request):
         serializer = ProfileSerializer(request.user)
         return Response(serializer.data)
-    
+
+    def put(self, request):
+        """
+        Actualiza: username, first_name, last_name, secret_question y secret_answer.
+        (email queda sólo lectura)
+        """
+        user = request.user
+
+        username = request.data.get("username", "").strip()
+        first_name = request.data.get("first_name", "")
+        last_name = request.data.get("last_name", "")
+        secret_question = request.data.get("secret_question", None)
+        secret_answer = request.data.get("secret_answer", None)
+
+        # Validar username único si viene distinto
+        if username and username.lower() != user.username.lower():
+            if User.objects.filter(username__iexact=username).exists():
+                return Response(
+                    {"detail": "El nombre de usuario ya está en uso."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            user.username = username
+
+        user.first_name = first_name or ""
+        user.last_name = last_name or ""
+        user.secret_question = secret_question  # puede ser None
+
+        # Guardar respuesta secreta si la envían
+        if secret_answer is not None:
+            # Si tu modelo implementa hashing, usa el setter
+            if hasattr(user, "set_secret_answer"):
+                user.set_secret_answer(secret_answer)
+            else:
+                # Si tienes un campo plano, ajusta el nombre:
+                # user.secret_answer = secret_answer
+                pass
+
+        user.save()
+        return Response(ProfileSerializer(user).data)
+
     def delete(self, request):
         user = request.user
-        password = request.data.get('password')
+        password = request.data.get("password")
         if not password or not user.check_password(password):
-            return Response({"detail": "Contraseña requerida para eliminar la cuenta."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Contraseña requerida para eliminar la cuenta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        """
+        Cambia la contraseña del usuario autenticado.
+        Requiere: current_password, new_password, confirm_password
+        """
+        current = request.data.get("current_password")
+        new = request.data.get("new_password")
+        confirm = request.data.get("confirm_password")
+
+        if not current or not new or not confirm:
+            return Response(
+                {"detail": "current_password, new_password y confirm_password son requeridos."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if new != confirm:
+            return Response(
+                {"detail": "La confirmación de contraseña no coincide."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not request.user.check_password(current):
+            return Response(
+                {"detail": "La contraseña actual no es correcta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.user.set_password(new)
+        request.user.save()
+        return Response({"detail": "Contraseña actualizada."})
+
+
+# -------- Reset password por email / por pregunta secreta (igual que ya tenías) --------
+
 class PasswordResetEmailView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -53,7 +133,8 @@ class PasswordResetEmailView(APIView):
         message = f"Usa el siguiente enlace para cambiar tu contraseña: {reset_link}\n\nSi no solicitaste esto, ignora este mensaje."
         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
         return Response({"detail": "Si existe una cuenta con ese email, recibirá instrucciones."})
-    
+
+
 class PasswordResetConfirmView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -64,7 +145,7 @@ class PasswordResetConfirmView(APIView):
         if not uidb64 or not token or not new_password:
             return Response({"detail": "uid, token y new_password requeridos."}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            uid = force_str(urlsafe_base64_decode(uidb64))
+            uid = force_str(urlsafe_b64decode(uidb64))
             user = User.objects.get(pk=uid)
         except Exception:
             return Response({"detail": "Token inválido."}, status=status.HTTP_400_BAD_REQUEST)
@@ -73,7 +154,8 @@ class PasswordResetConfirmView(APIView):
         user.set_password(new_password)
         user.save()
         return Response({"detail": "Contraseña actualizada."})
-    
+
+
 class PasswordResetBySecretView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -91,7 +173,6 @@ class PasswordResetBySecretView(APIView):
         if not user.secret_question:
             return Response({"detail": "Este usuario no tiene pregunta secreta configurada."}, status=400)
         return Response({"secret_question": user.secret_question})
-
 
     def put(self, request):
         identifier = request.data.get('identifier')
