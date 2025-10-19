@@ -73,3 +73,36 @@ body {
 }
 
 .shadow-soft { box-shadow: 0 10px 30px -20px rgba(0,0,0,.6); }
+
+/* Select oscuro legible (popup incluido) */
+.select-dark {
+  width: 100%;
+  border-radius: 0.5rem;
+  background-color: rgba(15,23,42,0.6); /* slate-900/60 */
+  border: 1px solid #1f2937;            /* slate-800 */
+  padding: 0.5rem 0.75rem;
+  color: #e5e7eb;                        /* slate-200 */
+  outline: none;
+}
+.select-dark:focus {
+  box-shadow: 0 0 0 4px rgba(79,70,229,0.15); /* ring indigo */
+}
+
+/* Forzar colores de opciones en el popup */
+.select-dark option {
+  background-color: #0b1220;  /* muy oscuro */
+  color: #e5e7eb;             /* claro */
+}
+
+/* Placeholder más tenue */
+.select-dark option[disabled],
+.select-dark option[value=""] {
+  color: #94a3b8;             /* slate-400 */
+}
+
+/* Opción seleccionada en el desplegable */
+.select-dark option:checked {
+  background-color: #312e81;  /* indigo-900 */
+  color: #fff;
+}
+

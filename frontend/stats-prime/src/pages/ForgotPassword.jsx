@@ -1,60 +1,45 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import Button from "../components/ui/Button";
 import authApi from "../api/authApi";
 
-
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const navigate = useNavigate();
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
-    const onSubmit = async (e) => {
-      e.preventDefault();
-      setError("");
-      setSuccess("");
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setError("Ingresa un correo válido.");
+      return;
+    }
 
-      if (!/^\S+@\S+\.\S+$/.test(email)) {
-        setError("Ingresa un correo válido.");
-        return;
-      }
-
-      try {
-        setLoading(true);
-
-        const res = await authApi.forgotPassword(email);
-        const data = res.data;
-
-        if (data.secret_question) {
-          localStorage.setItem("reset_email", email);
-          localStorage.setItem("secret_question", data.secret_question);
-          navigate("/reset-password");
-        } else {
-          setSuccess(data.message || "Instrucciones enviadas a tu correo.");
-        }
+    try {
+      setLoading(true);
+      const res = await authApi.forgotPassword(email);
+      const msg =
+        res?.data?.detail ||
+        res?.data?.message ||
+        "Si existe una cuenta con ese correo, recibirás instrucciones.";
+      setSuccess(msg);
     } catch (err) {
-      setError(
-        err.response?.data?.detail ||
-        err.response?.data?.error ||
-        err.message ||
-        "No se pudo procesar la solicitud."
-      );
+      const msg =
+        err?.response?.data?.detail ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "No se pudo procesar la solicitud.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
-
-  }
-};
+  };
 
   return (
     <section className="grid place-items-center">
@@ -74,11 +59,14 @@ export default function ForgotPassword() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="tucorreo@dominio.com"
               required
             />
           </div>
-          <Button className="w-full">Enviar instrucciones</Button>
+
+          <Button className="w-full" disabled={loading}>
             {loading ? "Enviando..." : "Enviar instrucciones"}
+          </Button>
         </form>
       </Card>
     </section>

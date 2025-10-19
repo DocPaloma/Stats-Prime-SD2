@@ -3,16 +3,15 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { getUserProfile } from "../api/profileApi";
+import { getUserProfile, deleteUserAccount } from "../api/profileApi";
 
 export default function Profile() {
-  const {isAuth} = useAuth();
+  const { isAuth, logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const { token, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,31 +19,40 @@ export default function Profile() {
       navigate("/login");
       return;
     }
-
-    const fetchProfile = async () => {
+    (async () => {
       try {
         const data = await getUserProfile();
         setProfile(data);
       } catch (err) {
-        setError("No se pudo cargar el perfil: " + err.message);
+        setError("No se pudo cargar el perfil: " + (err?.message || "Error"));
         console.error(err);
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchProfile();
+    })();
   }, [isAuth, navigate]);
 
-  const handleDelete = () => {
-    // TODO: llamada real al backend para eliminar cuenta
-    logout();         // salir tras borrar
-    navigate("/");    // redirigir
+  const handleDelete = async () => {
+    try {
+      // el backend exige contraseña para borrar; pedimos al usuario:
+      const password = window.prompt("Para confirmar, ingresa tu contraseña:");
+      if (!password) return;
+
+      await deleteUserAccount(password);
+      logout();
+      navigate("/");
+    } catch (err) {
+      alert(
+        err?.response?.data?.detail ||
+          err?.message ||
+          "No se pudo eliminar la cuenta."
+      );
+    }
   };
 
-  if (loading) return <p className="text-slate-400">Cargando perfil...</p>
-  if (error) return <p className="text-red-500">Error: {error}</p>
-  if (!profile) return <p className="text-slate-400">No hay datos de perfil disponibles.</p>
+  if (loading) return <p className="text-slate-400">Cargando perfil...</p>;
+  if (error) return <p className="text-red-500">Error: {error}</p>;
+  if (!profile) return <p className="text-slate-400">No hay datos de perfil.</p>;
 
   return (
     <section className="space-y-6">
@@ -52,29 +60,38 @@ export default function Profile() {
 
       <Card>
         <h2 className="font-semibold mb-2">Información</h2>
-          (
-            <>
-              <p className="text-slate-400 text-sm">Nombre de usuario: {profile.username || "No especificado"}</p>
-              <p className="text-slate-400 text-sm">Email: {profile.email}</p>
-              <p className="text-slate-400 text-sm">Nombre: {profile.first_name}</p>
-              <p className="text-slate-400 text-sm">Apellido: {profile.last_name}</p>
-            </>
-          ) : (
-            <p className="text-slate-400 text-sm">No hay información disponible.</p>
-          )
+        {profile ? (
+          <>
+            <p className="text-slate-400 text-sm">
+              Nombre de usuario: {profile.username || "No especificado"}
+            </p>
+            <p className="text-slate-400 text-sm">Email: {profile.email}</p>
+            <p className="text-slate-400 text-sm">
+              Nombre: {profile.first_name || "-"}
+            </p>
+            <p className="text-slate-400 text-sm">
+              Apellido: {profile.last_name || "-"}
+            </p>
+          </>
+        ) : (
+          <p className="text-slate-400 text-sm">No hay información disponible.</p>
+        )}
       </Card>
 
       <Card>
         <h2 className="font-semibold mb-3">Acciones</h2>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => navigate("/stats")} className="">Ver estadísticas</Button>
-          <Button className="bg-rose-600 hover:bg-rose-500" onClick={() => setConfirmOpen(true)}>
+          <Button onClick={() => navigate("/profile/edit")}>Editar perfil</Button>
+          <Button onClick={() => navigate("/stats")}>Ver estadísticas</Button>
+          <Button
+            className="bg-rose-600 hover:bg-rose-500"
+            onClick={() => setConfirmOpen(true)}
+          >
             Eliminar cuenta
           </Button>
         </div>
       </Card>
 
-      {/* Modal simple */}
       {confirmOpen && (
         <div className="fixed inset-0 z-20 grid place-items-center bg-black/60 p-4">
           <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-6">
@@ -83,8 +100,16 @@ export default function Profile() {
               Esta acción es irreversible. Se eliminarán tus datos.
             </p>
             <div className="mt-5 flex justify-end gap-2">
-              <button className="btn-ghost" onClick={() => setConfirmOpen(false)}>Cancelar</button>
-              <button className="btn-primary bg-rose-600 hover:bg-rose-500" onClick={handleDelete}>
+              <button className="btn-ghost" onClick={() => setConfirmOpen(false)}>
+                Cancelar
+              </button>
+              <button
+                className="btn-primary bg-rose-600 hover:bg-rose-500"
+                onClick={() => {
+                  setConfirmOpen(false);
+                  handleDelete();
+                }}
+              >
                 Sí, eliminar
               </button>
             </div>

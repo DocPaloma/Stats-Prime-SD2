@@ -19,22 +19,25 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             'email': {'required': True},
         }
 
-    # 👇 Todos estos métodos deben ir dentro de la clase
+    # Validar contraseñas iguales
     def validate(self, attrs):
         if attrs.get('password') != attrs.get('password2'):
             raise serializers.ValidationError({"password": "Las contraseñas no coinciden."})
         return attrs
-
+    
+    # Validar username único (sin distinción de mayúsculas/minúsculas)
     def validate_username(self, value):
         if User.objects.filter(username__iexact=value).exists():
             raise serializers.ValidationError("El nombre de usuario ya está en uso.")
         return value
-
+    
+    # Validar email único (sin distinción de mayúsculas/minúsculas)
     def validate_email(self, value):
         if User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("El correo ya está en uso.")
         return value
-
+    
+    # Crear usuario con contraseña y respuesta secreta seguras
     def create(self, validated_data):
         validated_data.pop('password2', None)
         raw_password = validated_data.pop('password')
@@ -50,9 +53,10 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         user.set_password(raw_password)
 
-        # Si tu modelo User tiene este método, lo aplicas
+        # Hashear respuesta secreta si existe
         if raw_secret and hasattr(user, 'set_secret_answer'):
             user.set_secret_answer(raw_secret)
+
 
         user.save()
         return user

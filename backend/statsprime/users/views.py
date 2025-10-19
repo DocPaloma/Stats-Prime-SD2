@@ -2,22 +2,15 @@ from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.core.mail import send_mail
-from django.conf import settings
-from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .serializers import UserRegisterSerializer, ProfileSerializer
 
 User = get_user_model()
 
 class RegisterView(generics.CreateAPIView):
-    permission_classes = [permissions.AllowAny]
     queryset = User.objects.all()
     serializer_class = UserRegisterSerializer
-
+    permission_classes = [permissions.AllowAny]
 
 class ProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -25,7 +18,44 @@ class ProfileView(APIView):
     def get(self, request):
         serializer = ProfileSerializer(request.user)
         return Response(serializer.data)
-    
+
+    def put(self, request):
+        user = request.user
+        data = request.data
+        current_password = data.get('current_password')
+
+        # Validar contraseña actual
+        if not current_password or not user.check_password(current_password):
+            return Response(
+                {"detail": "Contraseña actual requerida para actualizar."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Lista de campos que pueden ser editados
+        allowed_fields = ['username', 'first_name', 'last_name', 'email', 'secret_question', 'password']
+        for field in allowed_fields:
+            if field in data:
+                # Si el campo es 'email', verificar que no esté usado por otro usuario
+                if field == 'email' and User.objects.filter(email=data['email']).exclude(id=user.id).exists():
+                    return Response(
+                        {"detail": "Este correo electrónico ya está en uso."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                setattr(user, field, data[field])
+
+        # Actualizar respuesta secreta (usando método seguro)
+        new_secret = data.get('secret_answer')
+        if new_secret:
+            user.set_secret_answer(new_secret)
+
+        # Cambiar contraseña (opcional)
+        new_password = data.get('new_password')
+        if new_password:
+            user.set_password(new_password)
+
+        user.save()
+        return Response(ProfileSerializer(user).data)
+
     def delete(self, request):
         user = request.user
         password = request.data.get('password')
@@ -33,46 +63,6 @@ class ProfileView(APIView):
             return Response({"detail": "Contraseña requerida para eliminar la cuenta."}, status=status.HTTP_400_BAD_REQUEST)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-class PasswordResetEmailView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        email = request.data.get('email')
-        if not email:
-            return Response({"detail": "Email requerido."}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user = User.objects.get(email__iexact=email)
-        except User.DoesNotExist:
-            return Response({"detail": "Si existe una cuenta con ese email, recibirá instrucciones."})
-
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        reset_link = f"{request.scheme}://{request.get_host()}/reset-password-confirm/?uid={uid}&token={token}"
-        subject = "Reset de contraseña - StatsPrime"
-        message = f"Usa el siguiente enlace para cambiar tu contraseña: {reset_link}\n\nSi no solicitaste esto, ignora este mensaje."
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
-        return Response({"detail": "Si existe una cuenta con ese email, recibirá instrucciones."})
-    
-class PasswordResetConfirmView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        uidb64 = request.data.get('uid')
-        token = request.data.get('token')
-        new_password = request.data.get('new_password')
-        if not uidb64 or not token or not new_password:
-            return Response({"detail": "uid, token y new_password requeridos."}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            uid = force_str(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(pk=uid)
-        except Exception:
-            return Response({"detail": "Token inválido."}, status=status.HTTP_400_BAD_REQUEST)
-        if not default_token_generator.check_token(user, token):
-            return Response({"detail": "Token inválido o expirado."}, status=status.HTTP_400_BAD_REQUEST)
-        user.set_password(new_password)
-        user.save()
-        return Response({"detail": "Contraseña actualizada."})
     
 class PasswordResetBySecretView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -97,8 +87,10 @@ class PasswordResetBySecretView(APIView):
         identifier = request.data.get('identifier')
         answer = request.data.get('answer')
         new_password = request.data.get('new_password')
+
         if not identifier or not answer or not new_password:
             return Response({"detail": "identifier, answer y new_password requeridos."}, status=400)
+        
         try:
             user = User.objects.get(username__iexact=identifier)
         except User.DoesNotExist:

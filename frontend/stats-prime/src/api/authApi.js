@@ -2,23 +2,29 @@ import axiosClient from "./axiosClient";
 import publicApi from "./publicApi";
 
 const authApi = {
-  // 🔐 Autenticación
-  login: (username, password) => publicApi.post("users/login/", { username, password }),
-  register: (data) => publicApi.post("users/register/", data),
-  refreshToken: (refresh) => publicApi.post("users/token/refresh/", { refresh }),
+  // 🔐 Autenticación (todas bajo /api/users/)
+  login: (username, password) =>
+    publicApi.post("users/login/", { username, password }),
 
-  // 👤 Perfil
-  getProfile: () => axiosClient.get("users/profile/"),
+  register: (data) =>
+    publicApi.post("users/register/", data),
 
-  // 🔄 Recuperación de contraseña por correo
+  refreshToken: (refresh) =>
+    publicApi.post("users/token/refresh/", { refresh }),
+
+  // 👤 Perfil (requiere token – usa axiosClient)
+  getProfile: () =>
+    axiosClient.get("users/profile/"),
+
+  // 🔄 Recuperación por correo
   forgotPassword: (email) =>
     publicApi.post("users/password-reset-email/", { email }),
 
-  // ✅ Confirmar nueva contraseña usando token
+  // ✅ Confirmar nueva contraseña con token
   resetPasswordConfirm: (token, password) =>
     publicApi.post("users/password-reset-confirm/", { token, password }),
 
-  // 🧩 Alternativa: recuperación por pregunta secreta
+  // 🧩 Alternativa: pregunta secreta (si la usas)
   resetPasswordBySecret: (username, secret_answer, new_password) =>
     publicApi.post("users/password-reset-secret/", {
       username,
