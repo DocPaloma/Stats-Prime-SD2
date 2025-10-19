@@ -4,7 +4,7 @@ import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import Button from "../components/ui/Button";
-import { getUserProfile, updateUserProfile, changePassword } from "../api/profileApi";
+import { getUserProfile, updateUserProfile } from "../api/profileApi";
 
 export default function EditProfile() {
   const navigate = useNavigate();
@@ -19,26 +19,14 @@ export default function EditProfile() {
     last_name: "",
     secret_question: "",
     secret_answer: "",
-  });
-
-  // Sección cambio de contraseña (opcional)
-  const [pwd, setPwd] = useState({
-    current: "",
-    newp: "",
-    confirm: "",
+    current_password: "",
   });
 
   useEffect(() => {
     (async () => {
       try {
         const data = await getUserProfile();
-        setForm({
-          username: data.username || "",
-          first_name: data.first_name || "",
-          last_name: data.last_name || "",
-          secret_question: data.secret_question || "",
-          secret_answer: "", // no traemos la respuesta guardada por seguridad
-        });
+        setForm((prev) => ({...prev, username: data.username || "", first_name: data.first_name || "", last_name: data.last_name || "", secret_question: data.secret_question || "", secret_answer: "" }));
       } catch (err) {
         setError(
           err?.response?.data?.detail || err?.message || "No se pudo cargar."
@@ -50,45 +38,25 @@ export default function EditProfile() {
   }, []);
 
   const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-  const onChangePwd = (e) => setPwd((p) => ({ ...p, [e.target.name]: e.target.value }));
+
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     // Validaciones básicas
-    if (!form.username.trim()) {
-      setError("El nombre de usuario es obligatorio.");
+    if (!form.current_password.trim()) {
+      setError("Por favor, ingresa tu contraseña actual para confirmar los cambios.");
       return;
-    }
-    if (pwd.newp || pwd.confirm || pwd.current) {
-      if (!pwd.current || !pwd.newp || !pwd.confirm) {
-        setError("Para cambiar la contraseña, completa todos los campos de la sección de contraseña.");
-        return;
-      }
-      if (pwd.newp !== pwd.confirm) {
-        setError("La confirmación de la nueva contraseña no coincide.");
-        return;
-      }
     }
 
     try {
       setSaving(true);
+      const payload = {...form};
 
-      // 1) Actualizar perfil
-      await updateUserProfile({
-        username: form.username,
-        first_name: form.first_name,
-        last_name: form.last_name,
-        secret_question: form.secret_question || null,
-        // sólo mandamos secret_answer si se escribió algo
-        ...(form.secret_answer ? { secret_answer: form.secret_answer } : {}),
-      });
+      if (!payload.secret_answer) delete payload.secret_answer;
 
-      // 2) Cambiar contraseña (si la sección fue usada)
-      if (pwd.newp) {
-        await changePassword(pwd.current, pwd.newp, pwd.confirm);
-      }
+      await updateUserProfile(payload);
 
       navigate("/profile");
     } catch (err) {
@@ -147,6 +115,16 @@ export default function EditProfile() {
             </div>
 
             <div>
+              <Label>Correo electrónico</Label>
+              <Input
+                name="email"
+                value={form.email}
+                onChange={onChange}
+                placeholder="Tu correo electrónico"
+              />
+            </div>
+
+            <div>
               <Label>Pregunta secreta (opcional)</Label>
               <select
                 name="secret_question"
@@ -179,42 +157,18 @@ export default function EditProfile() {
             </div>
           </div>
 
-          {/* ---------------- Cambio de contraseña (opcional) ---------------- */}
-          <div className="border-t border-slate-800 pt-6 space-y-4">
-            <h2 className="font-semibold">Cambiar contraseña (opcional)</h2>
-
-            <div>
-              <Label>Contraseña actual</Label>
-              <Input
-                type="password"
-                name="current"
-                value={pwd.current}
-                onChange={onChangePwd}
-                placeholder="Tu contraseña actual"
-              />
-            </div>
-
-            <div>
-              <Label>Nueva contraseña</Label>
-              <Input
-                type="password"
-                name="newp"
-                value={pwd.newp}
-                onChange={onChangePwd}
-                placeholder="Nueva contraseña"
-              />
-            </div>
-
-            <div>
-              <Label>Confirmar nueva contraseña</Label>
-              <Input
-                type="password"
-                name="confirm"
-                value={pwd.confirm}
-                onChange={onChangePwd}
-                placeholder="Repite la nueva contraseña"
-              />
-            </div>
+          <div>
+            <Label>Contraseña actual</Label>
+            <Input
+              type="password"
+              name="current_password"
+              value={form.current_password}
+              onChange={onChange}
+              placeholder="Ingresa tu contraseña actual"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Ingresa tu contraseña actual para confirmar los cambios.
+            </p>
           </div>
 
           <div className="flex gap-2">
