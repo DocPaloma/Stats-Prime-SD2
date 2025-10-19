@@ -83,14 +83,14 @@ export default function Home() {
           </Card>
 
         {/* Sección de juegos disponibles */}
-          <Card className="p-6">
-            <h3 className="font-semibold mb-4">Juegos disponibles</h3>
-            <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="p-8 shadow-xl">
+            <h3 className="font-semibold mb-6 text-2xl text-center text-white">Juegos disponibles</h3>
+            <div className="grid gap-8 sm:grid-cols-3">
               {/* Genshin Impact */}
               <button
                 onClick={() => navigate("/games/genshin")}
                 className="group relative rounded-xl overflow-hidden border border-slate-700 hover:border-indigo-500
-                           transition-all duration-200 focus:outline-none"
+                           transition-all duration-200 focus:outline-none hover:scale-[1.03]"
               >
                 <img
                   src={genshinImg}
@@ -105,7 +105,7 @@ export default function Home() {
               <button
                 onClick={() => navigate("/games/wuthering")}
                 className="group relative rounded-xl overflow-hidden border border-slate-700 hover:border-indigo-500
-                           transition-all duration-200 focus:outline-none"
+                           transition-all duration-200 focus:outline-none hover:scale-[1.03]"
               >
                 <img
                   src={wutheringImg}
