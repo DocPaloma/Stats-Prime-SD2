@@ -35,3 +35,32 @@ class FarmEvent(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.source.name} ({self.date})"
+    
+    @property
+    def total_drops(self):
+        return sum(drop.quantity for drop in self.drops.all())
+    
+class FarmDrop(models.Model):
+    event = models.ForeignKey('FarmEvent', on_delete=models.CASCADE, related_name='drops')
+    reward = models.ForeignKey('FarmReward', on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.reward.name} x{self.quantity} ({self.event.user.username})"
+
+    
+class FarmReward(models.Model):
+    RARITY_CHOICES = [
+        ('COMUN', 'Común'),
+        ('RARO', 'Raro'),
+        ('EPICO', 'Épico'),
+        ('LEGENDARIO', 'Legendario'),
+    ]
+
+    name = models.CharField(max_length=150)
+    rarity = models.CharField(max_length=20, choices=RARITY_CHOICES)
+    source = models.ForeignKey(FarmSource, on_delete=models.CASCADE, related_name='rewards')
+
+    def __str__(self):
+        return f"{self.name} ({self.get_rarity_display()}) - {self.source.name}"
+
