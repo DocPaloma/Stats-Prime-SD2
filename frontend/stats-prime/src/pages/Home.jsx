@@ -21,6 +21,10 @@ import heroImg from "../assets/hero-gacha.jpg";
 import ssDrops from "../assets/screenshot-drops.png";
 import ssStats from "../assets/screenshot-stats.webp";
 
+import genshinImg from "../assets/genshin/genshin-impact.jpg";
+import wutheringImg from "../assets/wuwa/wuthering-logo.jpg";
+import warframeImg from "../assets/warframe/warframe-logo.jpg";
+
 export default function Home() {
   const { isAuth } = useAuth();
   const navigate = useNavigate();
@@ -76,6 +80,57 @@ export default function Home() {
             <h3 className="font-semibold">Estado del sprint</h3>
             <p className="text-slate-400 mt-1">3 tareas en progreso, 2 cerradas.</p>
             <Button className="mt-3">Ver tablero</Button>
+          </Card>
+
+        {/* Sección de juegos disponibles */}
+          <Card className="p-6">
+            <h3 className="font-semibold mb-4">Juegos disponibles</h3>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {/* Genshin Impact */}
+              <button
+                onClick={() => navigate("/games/genshin")}
+                className="group relative rounded-xl overflow-hidden border border-slate-700 hover:border-indigo-500
+                           transition-all duration-200 focus:outline-none"
+              >
+                <img
+                  src={genshinImg}
+                  alt="Genshin Impact"
+                  className="w-full h-40 object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <span className="absolute bottom-2 left-3 text-white font-semibold text-sm">Genshin Impact</span>
+              </button>
+
+              {/* Wuthering Waves */}
+              <button
+                onClick={() => navigate("/games/wuthering")}
+                className="group relative rounded-xl overflow-hidden border border-slate-700 hover:border-indigo-500
+                           transition-all duration-200 focus:outline-none"
+              >
+                <img
+                  src={wutheringImg}
+                  alt="Wuthering Waves"
+                  className="w-full h-40 object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <span className="absolute bottom-2 left-3 text-white font-semibold text-sm">Wuthering Waves</span>
+              </button>
+
+              {/* Warframe - bloqueado */}
+              <div
+                className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900/40 cursor-not-allowed opacity-70"
+              >
+                <img
+                  src={warframeImg}
+                  alt="Warframe (Próximamente)"
+                  className="w-full h-40 object-cover grayscale opacity-70"
+                />
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
+                  <span className="text-sm font-semibold">Warframe</span>
+                  <span className="text-xs text-slate-300">Próximamente</span>
+                </div>
+              </div>
+            </div>
           </Card>
         </div>
       )}
