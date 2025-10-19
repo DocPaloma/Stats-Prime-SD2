@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import FarmEventViewSet, FarmSourceRewardsView, FarmSourceViewSet
+from .views import FarmEventViewSet, FarmSourceRewardsView, FarmSourceViewSet, FarmStatsView
 
 router = DefaultRouter()
 router.register(r'games/(?P<game_id>\d+)/farm-events', FarmEventViewSet, basename='farm-events')
@@ -15,4 +15,5 @@ urlpatterns = [
         FarmSourceRewardsView.as_view(),
         name='farm-source-rewards'
     ),
+    path('games/<int:game_id>/stats/', FarmStatsView.as_view(), name='farm-stats'),
 ]
