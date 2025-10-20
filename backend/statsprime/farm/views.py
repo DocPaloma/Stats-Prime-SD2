@@ -1,13 +1,14 @@
 from rest_framework import viewsets, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Sum, Avg, Count
-from .models import FarmEvent, FarmReward, FarmSource
+from django.db.models import Sum, Avg, Count, Min, Max, F, StdDev, Prefetch
+from statistics import median
+from .models import FarmEvent, FarmReward, FarmSource, FarmDrop
 from .serializers import (
     FarmEventSerializer,
     FarmDropSerializer,
     FarmSourceSerializer,
-    FarmRewardSerializer,  # 👈 agrega esta línea
+    FarmRewardSerializer,
 )
 
 class FarmEventViewSet(viewsets.ModelViewSet):
@@ -44,7 +45,6 @@ class FarmStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, game_id):
-        from .models import FarmEvent, FarmDrop  # 👈 importa dentro para evitar ciclos
         user = request.user
 
         # Filtros opcionales
@@ -52,13 +52,30 @@ class FarmStatsView(APIView):
         item_id = request.query_params.get('itemID')
         start_date = request.query_params.get('startDate')
         end_date = request.query_params.get('endDate')
+        user_scope = request.query_params.get('userScope', 'personal')  # personal o global
+        group_by = request.query_params.get('groupBy', 'item')  # item, rarity o both
 
         # Base: eventos del usuario y del juego
-        events = FarmEvent.objects.filter(user=user, game__id=game_id)
+        events = FarmEvent.objects.filter(game__id=game_id)
+        if user_scope == 'personal':
+            events = events.filter(user=user)
         if source_id:
             events = events.filter(source__id=source_id)
         if start_date and end_date:
             events = events.filter(date__range=[start_date, end_date])
+        elif start_date:
+            events = events.filter(date__gte=start_date)
+        elif end_date:
+            events = events.filter(date__lte=end_date)
+
+        # Si no hay fechas, calcular automáticamente el rango real
+        if not start_date or not end_date:
+            date_bounds = events.aggregate(
+                min_date=Min('date'),
+                max_date=Max('date')
+            )
+            start_date = start_date or (date_bounds['min_date'].isoformat() if date_bounds['min_date'] else None)
+            end_date = end_date or (date_bounds['max_date'].isoformat() if date_bounds['max_date'] else None)
 
         # Drops relacionados
         drops = FarmDrop.objects.filter(event__in=events)
@@ -70,16 +87,145 @@ class FarmStatsView(APIView):
         total_drops = drops.aggregate(total=Sum('quantity'))['total'] or 0
         avg_drops = drops.aggregate(avg=Avg('quantity'))['avg'] or 0
 
-        # Estadísticas agrupadas por ítem
-        drops_by_item = drops.values('reward__name').annotate(
-            total_quantity=Sum('quantity'),
-            avg_quantity=Avg('quantity'),
-            event_count=Count('event', distinct=True)
+        # --- Agrupación dinámica ---
+        group_fields = []
+        if group_by in ['item', 'both']:
+            group_fields.append('reward__name')
+        if group_by in ['rarity', 'both']:
+            group_fields.append('reward__rarity')
+
+        # --- Agregación estadística ---
+        drops_grouped = (
+            drops.values(*group_fields)
+            .annotate(
+                avg_quantity=Avg('quantity'),
+                min_quantity=Min('quantity'),
+                max_quantity=Max('quantity'),
+                total_quantity=Sum('quantity'),
+                drop_count=Count('id'),
+                stddev_quantity=StdDev('quantity'),
+            )
         )
 
+        # Cálculo de la mediana (manual porque Django no tiene built-in)
+        for g in drops_grouped:
+            quantities = list(
+                drops.filter(
+                    **{k: g[k] for k in group_fields}
+                ).values_list('quantity', flat=True)
+            )
+            g['median_quantity'] = float(median(quantities)) if quantities else 0
+
         return Response({
-            "total_events": total_events,
-            "total_drops": total_drops,
-            "avg_drops": round(avg_drops, 2),
-            "drops_by_item": drops_by_item,
+            "scope": user_scope,
+            "filters": {
+                "game_id": game_id,
+                "source_id": source_id,
+                "date_range": [start_date, end_date],
+                "group_by": group_by
+            },
+            "summary": {
+                "total_events": total_events,
+                "total_drops": total_drops,
+                "avg_drops": round(avg_drops, 2),
+            },
+            "stats": drops_grouped
         })
+    
+# Nueva vista: cálculo de probabilidad de drop
+class DropRateStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, game_id):
+        user = request.user
+        source_id = request.query_params.get("sourceID")
+        item_id = request.query_params.get("itemID")
+
+        if not source_id:
+            return Response({"error": "Se requiere el parámetro sourceID."}, status=400)
+
+        # Eventos del usuario para esa fuente
+        total_events = FarmEvent.objects.filter(
+            user=user, game__id=game_id, source__id=source_id
+        ).count()
+
+        if total_events == 0:
+            return Response({
+                "message": "No hay eventos registrados para esta fuente.",
+                "drop_rate": 0
+            })
+
+        # Eventos en los que cayó el ítem (si se especifica)
+        drops_qs = FarmDrop.objects.filter(
+            event__user=user,
+            event__game__id=game_id,
+            event__source__id=source_id
+        )
+
+        if item_id:
+            drops_qs = drops_qs.filter(reward__id=item_id)
+
+        # Número de eventos únicos donde cayó ese ítem
+        events_with_item = drops_qs.values("event").distinct().count()
+
+        # Drop rate base
+        drop_rate = events_with_item / total_events if total_events else 0
+
+        # --- Drop rate por rareza ---
+        drop_rate_by_rarity = []
+        rarity_data = drops_qs.values("reward__rarity").annotate(
+            event_count=Count("event", distinct=True)
+        )
+
+        for r in rarity_data:
+            drop_rate_by_rarity.append({
+                "rarity": r["reward__rarity"],
+                "drop_rate": round(r["event_count"] / total_events, 3)
+            })
+
+        return Response({
+            "game_id": game_id,
+            "source_id": source_id,
+            "item_id": item_id,
+            "total_events": total_events,
+            "events_with_item": events_with_item,
+            "drop_rate": round(drop_rate, 3),
+            "drop_rate_by_rarity": drop_rate_by_rarity
+        })
+    
+class FarmHistoryView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = FarmEventSerializer
+
+    def get_queryset(self):
+        user_param = self.request.query_params.get('user')
+        game_id = self.request.query_params.get('gameID')
+        source_id = self.request.query_params.get('sourceID')
+        type_param = self.request.query_params.get('type')
+
+        # Si se pasa ?user=, buscar ese usuario; si no, usar el autenticado
+        if user_param:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                user = User.objects.get(username=user_param)
+            except User.DoesNotExist:
+                return FarmEvent.objects.none()
+        else:
+            user = self.request.user
+
+        # Base query
+        queryset = FarmEvent.objects.filter(user=user).order_by('-date')
+
+        # Filtros opcionales
+        if game_id:
+            queryset = queryset.filter(game__id=game_id)
+        if source_id:
+            queryset = queryset.filter(source__id=source_id)
+        if type_param:
+            queryset = queryset.filter(source__type__iexact=type_param)
+
+        # Prefetch para traer los drops relacionados en una sola consulta
+        return queryset.prefetch_related(
+            Prefetch('farmdrop_set', queryset=FarmDrop.objects.select_related('reward'))
+        )
