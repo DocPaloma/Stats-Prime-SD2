@@ -9,6 +9,7 @@ import PasswordResetBySecret from './pages/ForgotPassword';
 import Stats from './pages/Stats';
 import GameView from './pages/Game';
 import GameChoose from './pages/GenshinOrWuWa';
+import GenshinStats from './pages/GenshinStats';
 import FarmEventRegister from './pages/FarmEventForm';
 import Footer from './components/Footer';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -35,9 +36,9 @@ export default function App() {
 
             {/* Rutas del juego */}
             <Route path="/games/:gameId" element={<PrivateRoute><GameView /></PrivateRoute>} />
-            <Route path="/games/:gameId/:farmType" element={<PrivateRoute>
-              <GameChoose />
-            </PrivateRoute>} />
+            <Route path="/games/genshin/world-bosses" element={<GenshinStats farmType="JEFE" />} />
+            <Route path="/games/genshin/weekly-bosses" element={<GenshinStats farmType="JEFE-SEMANAL" />} />
+            <Route path="/games/genshin/domains" element={<GenshinStats farmType="DOMINIO" />} />
             
             {/* Nueva ruta para registrar eventos */}
             <Route path="/farm-event/register" element={<PrivateRoute><FarmEventRegister /></PrivateRoute>} />

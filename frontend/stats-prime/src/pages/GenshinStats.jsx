@@ -1,151 +1,94 @@
 import { useEffect, useState } from "react";
-import { getFarmEvents, getSources } from "../api/farmEvents";
+import axios from "axios";
 
 export default function GenshinStats({ farmType }) {
-  const gameIdDb = 1; // Genshin Impact → ID 1 en tu backend
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [events, setEvents] = useState([]);
-  const [sources, setSources] = useState([]);
-  const [filteredEvents, setFilteredEvents] = useState([]);
-  const [filters, setFilters] = useState({
-    date: "",
-    rarity: "",
-    source: "",
-  });
+  const gameId = 1; // Genshin Impact en tu base de datos
+  const token = localStorage.getItem("access");
 
-  // 🔹 1. Cargar datos
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStats = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const [eventsData, sourcesData] = await Promise.all([
-          getFarmEvents(gameIdDb),
-          getSources(gameIdDb),
-        ]);
-        setEvents(eventsData);
-        setSources(sourcesData);
+        const res = await axios.get(`http://127.0.0.1:8000/api/games/${gameId}/farm-stats/`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { type: farmType }, // JEFE, JEFE-SEMANAL, DOMINIO
+        });
+        setData(res.data);
       } catch (err) {
-        console.error("Error cargando datos:", err);
+        console.error("Error fetching stats:", err);
+        setError("No se pudieron cargar las estadísticas.");
+      } finally {
+        setLoading(false);
       }
     };
-    fetchData();
-  }, [gameIdDb]);
 
-  // 🔹 2. Filtrar por tipo de fuente
-  const getValidSourceTypes = () => {
-    if (farmType === "world-bosses") return ["JEFE"];
-    if (farmType === "weekly-bosses") return ["JEFE-SEMANAL"];
-    if (farmType === "domains") return ["DOMINIO"];
-    return [];
+    fetchStats();
+  }, [farmType]);
+
+  if (loading) return <p className="text-center mt-10">Cargando estadísticas...</p>;
+  if (error) return <p className="text-center text-red-500 mt-10">{error}</p>;
+
+  const titleMap = {
+    JEFE: "Jefes de Mundo",
+    "JEFE-SEMANAL": "Jefes Semanales",
+    DOMINIO: "Dominios",
   };
 
-  // 🔹 3. Aplicar filtros
-  useEffect(() => {
-    const validTypes = getValidSourceTypes();
-
-    let filtered = events.filter((e) =>
-      validTypes.includes(
-        sources.find((s) => s.id === e.source)?.source_type || ""
-      )
-    );
-
-    if (filters.source)
-      filtered = filtered.filter(
-        (e) => sources.find((s) => s.id === e.source)?.name === filters.source
-      );
-
-    if (filters.rarity)
-      filtered = filtered.filter((e) =>
-        e.rewards?.some((r) => r.rarity_display === filters.rarity)
-      );
-
-    if (filters.date)
-      filtered = filtered.filter((e) => e.date === filters.date);
-
-    setFilteredEvents(filtered);
-  }, [events, sources, farmType, filters]);
-
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-      <main className="flex-1 p-6">
-        <h1 className="text-2xl font-bold mb-4">
-          Genshin Impact — {farmType.replace("-", " ")}
-        </h1>
+    <div className="p-6 max-w-5xl mx-auto">
+      <h1 className="text-3xl font-bold mb-4 text-center text-blue-600">
+        Genshin Impact — {titleMap[farmType] || farmType}
+      </h1>
 
-        {/* 🎛️ Filtros */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <select
-            value={filters.source}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, source: e.target.value }))
-            }
-            className="bg-slate-800 border border-slate-700 p-2 rounded"
-          >
-            <option value="">Filtrar por fuente</option>
-            {sources
-              .filter((s) => getValidSourceTypes().includes(s.source_type))
-              .map((s) => (
-                <option key={s.id} value={s.name}>
-                  {s.name}
-                </option>
+      {/* --- Resumen general --- */}
+      <div className="bg-gray-100 rounded-xl p-4 shadow-md mb-6">
+        <h2 className="text-xl font-semibold mb-3">Resumen general</h2>
+        <ul className="space-y-1">
+          <li>🕹️ Total de eventos: {data.summary.total_events}</li>
+          <li>🎁 Total de drops: {data.summary.total_drops}</li>
+          <li>📊 Promedio de drops: {data.summary.avg_drops}</li>
+        </ul>
+      </div>
+
+      {/* --- Tabla de drops --- */}
+      <div className="bg-white rounded-xl shadow p-4 overflow-x-auto">
+        <h2 className="text-xl font-semibold mb-3">Drops obtenidos</h2>
+        {data.drops.length > 0 ? (
+          <table className="min-w-full text-sm text-left border-collapse">
+            <thead>
+              <tr className="border-b bg-gray-50">
+                <th className="p-2">Ítem</th>
+                <th className="p-2">Rareza</th>
+                <th className="p-2">Total</th>
+                <th className="p-2">Promedio</th>
+                <th className="p-2">Máx.</th>
+                <th className="p-2">Mín.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.drops.map((drop, i) => (
+                <tr key={i} className="border-b hover:bg-gray-50">
+                  <td className="p-2">{drop.reward__name}</td>
+                  <td className="p-2">{drop.reward__rarity}</td>
+                  <td className="p-2">{drop.total_quantity}</td>
+                  <td className="p-2">{drop.avg_quantity.toFixed(2)}</td>
+                  <td className="p-2">{drop.max_quantity}</td>
+                  <td className="p-2">{drop.min_quantity}</td>
+                </tr>
               ))}
-          </select>
+            </tbody>
+          </table>
+        ) : (
+          <p>No hay drops registrados para este tipo de fuente.</p>
+        )}
+      </div>
 
-          <select
-            value={filters.rarity}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, rarity: e.target.value }))
-            }
-            className="bg-slate-800 border border-slate-700 p-2 rounded"
-          >
-            <option value="">Rareza</option>
-            {[1, 2, 3, 4, 5].map((r) => (
-              <option key={r} value={r}>
-                ⭐ {r}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="date"
-            value={filters.date}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, date: e.target.value }))
-            }
-            className="bg-slate-800 border border-slate-700 p-2 rounded"
-          />
-        </div>
-
-        {/* 📋 Lista de eventos */}
-        <div className="space-y-4">
-          {filteredEvents.length > 0 ? (
-            filteredEvents.map((event) => {
-              const src = sources.find((s) => s.id === event.source);
-              return (
-                <div
-                  key={event.id}
-                  className="border border-slate-700 rounded-lg p-4 bg-slate-900"
-                >
-                  <h2 className="text-lg font-semibold">
-                    {src ? src.name : "Fuente desconocida"}
-                  </h2>
-                  <p className="text-sm text-slate-400">
-                    Fecha: {event.date} — {src?.source_type}
-                  </p>
-                  <ul className="mt-2">
-                    {event.rewards?.map((r) => (
-                      <li key={r.id} className="text-slate-300 text-sm">
-                        {r.name} ({r.rarity_display}⭐)
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })
-          ) : (
-            <p className="text-slate-500">No hay registros disponibles.</p>
-          )}
-        </div>
-      </main>
+      
     </div>
   );
 }
