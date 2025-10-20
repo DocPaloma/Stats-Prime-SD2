@@ -70,97 +70,6 @@ class FarmSourceRewardsView(generics.ListAPIView):
 # -------------------------------
 # Estadísticas generales de farmeo
 # -------------------------------
-class FarmStatsView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request, game_id):
-        user = request.user
-
-        # Filtros opcionales
-        source_id = request.query_params.get('sourceID')
-        item_id = request.query_params.get('itemID')
-        start_date = request.query_params.get('startDate')
-        end_date = request.query_params.get('endDate')
-        user_scope = request.query_params.get('userScope', 'personal')  # personal o global
-        group_by = request.query_params.get('groupBy', 'item')  # item, rarity o both
-
-        # Base: eventos del usuario y del juego
-        events = FarmEvent.objects.filter(game__id=game_id)
-        if user_scope == 'personal':
-            events = events.filter(user=user)
-        if source_id:
-            events = events.filter(source__id=source_id)
-        if start_date and end_date:
-            events = events.filter(date__range=[start_date, end_date])
-        elif start_date:
-            events = events.filter(date__gte=start_date)
-        elif end_date:
-            events = events.filter(date__lte=end_date)
-
-        # Si no hay fechas, calcular automáticamente el rango real
-        if not start_date or not end_date:
-            date_bounds = events.aggregate(
-                min_date=Min('date'),
-                max_date=Max('date')
-            )
-            start_date = start_date or (date_bounds['min_date'].isoformat() if date_bounds['min_date'] else None)
-            end_date = end_date or (date_bounds['max_date'].isoformat() if date_bounds['max_date'] else None)
-
-        # Drops relacionados
-        drops = FarmDrop.objects.filter(event__in=events)
-        if item_id:
-            drops = drops.filter(reward__id=item_id)
-
-        # Estadísticas generales
-        total_events = events.count()
-        total_drops = drops.aggregate(total=Sum('quantity'))['total'] or 0
-        avg_drops = drops.aggregate(avg=Avg('quantity'))['avg'] or 0
-
-        # --- Agrupación dinámica ---
-        group_fields = []
-        if group_by in ['item', 'both']:
-            group_fields.append('reward__name')
-        if group_by in ['rarity', 'both']:
-            group_fields.append('reward__rarity')
-
-        # --- Agregación estadística ---
-        drops_grouped = (
-            drops.values(*group_fields)
-            .annotate(
-                avg_quantity=Avg('quantity'),
-                min_quantity=Min('quantity'),
-                max_quantity=Max('quantity'),
-                total_quantity=Sum('quantity'),
-                drop_count=Count('id'),
-                stddev_quantity=StdDev('quantity'),
-            )
-        )
-
-        # Cálculo de la mediana (manual porque Django no tiene built-in)
-        for g in drops_grouped:
-            quantities = list(
-                drops.filter(
-                    **{k: g[k] for k in group_fields}
-                ).values_list('quantity', flat=True)
-            )
-            g['median_quantity'] = float(median(quantities)) if quantities else 0
-
-        return Response({
-            "scope": user_scope,
-            "filters": {
-                "game_id": game_id,
-                "source_id": source_id,
-                "date_range": [start_date, end_date],
-                "group_by": group_by
-            },
-            "summary": {
-                "total_events": total_events,
-                "total_drops": total_drops,
-                "avg_drops": round(avg_drops, 2),
-            },
-            "stats": drops_grouped
-        })
-    
 # -----------------------------
 # Estadísticas personales por juego
 # -----------------------------
@@ -170,19 +79,38 @@ class UserStatsView(APIView):
     def get(self, request):
         user = request.user
         game_id = request.query_params.get("game_id")
+        source_name = request.query_params.get("source")  # nombre del jefe/dominio
+        item_name = request.query_params.get("item")       # nombre del ítem
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
 
         if not game_id:
             return Response({"error": "Debe especificar un game_id."}, status=400)
 
-        # Filtrar solo eventos del usuario y del juego seleccionado
+        # --- Filtrar eventos base ---
         events = FarmEvent.objects.filter(user=user, game__id=game_id)
+
+        if source_name:
+            events = events.filter(source__name__iexact=source_name)  # búsqueda por nombre
+
+        # --- Filtro por fecha (rango inclusivo) ---
+        if start_date:
+            events = events.filter(date__gte=start_date)
+        if end_date:
+            events = events.filter(date__lte=end_date)
+
+        # --- Drops relacionados (solo de los eventos filtrados) ---
         drops = FarmDrop.objects.filter(event__in=events)
 
+        if item_name:
+            drops = drops.filter(reward__name__iexact=item_name)
+
+        # --- Cálculos principales ---
         total_events = events.count()
         total_drops = drops.aggregate(total=Sum("quantity"))["total"] or 0
         avg_drops = drops.aggregate(avg=Avg("quantity"))["avg"] or 0
 
-        # Agrupar por ítem
+        # --- Agrupar por ítem ---
         drops_grouped = (
             drops.values("reward__name", "reward__rarity")
             .annotate(
@@ -195,15 +123,37 @@ class UserStatsView(APIView):
             .order_by("-total_quantity")
         )
 
+        # --- Distribución por tipo (JEFE, DOMINIO, etc.) ---
+        by_type = (
+            events.values("source__name", "farm_type")
+            .annotate(count=Count("id"))
+            .order_by("source__name")
+        )
+
+        # --- Promedio de drops por día ---
+        by_day = (
+            events.values("date")
+            .annotate(avg_drops=Avg("drops__quantity"))
+            .order_by("date")
+        )
+
         return Response({
             "user": user.username,
             "game_id": game_id,
+            "filters": {
+                "source": source_name,
+                "item": item_name,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
             "summary": {
                 "total_events": total_events,
                 "total_drops": total_drops,
                 "avg_drops": round(avg_drops, 2),
             },
             "drops": drops_grouped,
+            "by_type": list(by_type),
+            "by_day": list(by_day),
         })
     
 # --------------------
@@ -311,10 +261,96 @@ class FarmHistoryView(generics.ListAPIView):
         )
     
 # -----------------------
-# Vista de Juegos (nueva)
+# Vista de Estadisticas Globales
 # -----------------------
 class GameViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Game.objects.all()
     serializer_class = GameSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+class FarmStatsView(APIView):
+    """
+    Estadísticas globales por juego, con filtros opcionales:
+    - type: tipo de farmevent (boss, weekly_boss, domain, etc.)
+    - sourceID: ID de la fuente
+    - itemID: ID del ítem
+    - startDate / endDate: rango de fechas
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, game_id):
+        # Filtros
+        type_filter = request.query_params.get("type")          # tipo de farmevent
+        source_id = request.query_params.get("sourceID")        # ID de jefe/fuente
+        item_id = request.query_params.get("itemID")            # ID de ítem
+        start_date = request.query_params.get("startDate")      # YYYY-MM-DD
+        end_date = request.query_params.get("endDate")          # YYYY-MM-DD
+
+        # Base: todos los eventos del juego
+        events = FarmEvent.objects.filter(game__id=game_id)
+
+        # Filtrar por tipo
+        if type_filter:
+            events = events.filter(farm_type__iexact=type_filter)
+
+        # Filtrar por fuente
+        if source_id:
+            events = events.filter(source__id=source_id)
+
+        # Filtrar por fechas (rango inclusivo)
+        if start_date and end_date:
+            events = events.filter(date__range=[start_date, end_date])
+        elif start_date:
+            events = events.filter(date__gte=start_date)
+        elif end_date:
+            events = events.filter(date__lte=end_date)
+
+        # Drops relacionados
+        drops = FarmDrop.objects.filter(event__in=events)
+        if item_id:
+            drops = drops.filter(reward__id=item_id)
+
+        # Estadísticas generales
+        total_events = events.count()
+        total_drops = drops.aggregate(total=Sum('quantity'))['total'] or 0
+        avg_drops = drops.aggregate(avg=Avg('quantity'))['avg'] or 0
+
+        # Agrupar por ítem y rareza
+        drops_grouped = (
+            drops.values("reward__name", "reward__rarity")
+            .annotate(
+                total_quantity=Sum("quantity"),
+                avg_quantity=Avg("quantity"),
+                min_quantity=Min("quantity"),
+                max_quantity=Max("quantity"),
+                drop_count=Count("id"),
+                stddev_quantity=StdDev("quantity"),
+            )
+            .order_by("-total_quantity")
+        )
+
+        # Calcular mediana manualmente
+        for g in drops_grouped:
+            quantities = list(
+                drops.filter(
+                    reward__name=g["reward__name"],
+                    reward__rarity=g["reward__rarity"]
+                ).values_list("quantity", flat=True)
+            )
+            g["median_quantity"] = float(median(quantities)) if quantities else 0
+
+        return Response({
+            "game_id": game_id,
+            "filters": {
+                "type": type_filter,
+                "sourceID": source_id,
+                "itemID": item_id,
+                "date_range": [start_date, end_date],
+            },
+            "summary": {
+                "total_events": total_events,
+                "total_drops": total_drops,
+                "avg_drops": round(avg_drops, 2),
+            },
+            "drops": drops_grouped
+        })

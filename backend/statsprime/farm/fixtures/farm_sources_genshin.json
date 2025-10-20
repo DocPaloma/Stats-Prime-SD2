@@ -2,7 +2,7 @@
     {
         "model": "farm.farmsource",
         "fields": {
-            "name": "SELENIMPARIPOSA RADIANTE",
+            "name": "SELENIMARIPOSA RADIANTE",
             "location": "Nod Krai",
             "source_type": "JEFE",
             "game": 1

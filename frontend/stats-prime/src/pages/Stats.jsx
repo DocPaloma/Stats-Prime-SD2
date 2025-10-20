@@ -35,8 +35,8 @@ export default function Stats() {
   // Filtros
   const [filters, setFilters] = useState({
     gameId: "",
-    sourceId: "",
-    itemId: "",
+    source: "",
+    item: "",
     from: "",
     to: "",
   });
@@ -66,8 +66,9 @@ export default function Stats() {
   }, [data]);
 
   // No hay "byType" ni "timeseries" en el backend, así que dejamos vacío
-  const byType = [];
-  const timeseries = [];
+  const byType = data?.by_type || [];
+  const byDay = data?.by_day || [];
+
 
 
   const onChange = (e) => {
@@ -92,8 +93,8 @@ export default function Stats() {
     const res = await axiosClient.get(`user-stats/`, {
       params: {
         game_id: filters.gameId,
-        source_id: filters.sourceId || undefined,
-        item_id: filters.itemId || undefined,
+        source: filters.source || undefined,
+        item: filters.item || undefined,
         start_date: filters.from || undefined,
         end_date: filters.to || undefined,
       },
@@ -120,12 +121,6 @@ export default function Stats() {
     };
     fetchGames();
   }, []);
-
-  // Datos procesados (sin gráficas)
-  const pieData = useMemo(
-    () => byType.map((d) => `${d.type}: ${d.count}`).join(", "),
-    [byType]
-  );
 
   return (
     <section className="space-y-6">
@@ -158,21 +153,21 @@ export default function Stats() {
           </div>
 
           <div>
-            <Label>Fuente (sourceId)</Label>
+            <Label>Fuente (Nombre del jefe)</Label>
             <Input
-              name="sourceId"
-              value={filters.sourceId}
+              name="source"
+              value={filters.source}
               onChange={onChange}
-              placeholder="Ej: dungeon-1"
+              placeholder="Ej: Stormterror"
             />
           </div>
           <div>
-            <Label>Item ID</Label>
+            <Label>Nombre del Item</Label>
             <Input
-              name="itemId"
-              value={filters.itemId}
+              name="item"
+              value={filters.item}
               onChange={onChange}
-              placeholder="Ej: item-125"
+              placeholder="Ej: Final del Gladiador"
             />
           </div>
           <div>
@@ -192,7 +187,7 @@ export default function Stats() {
           <Button
             className="bg-slate-700 hover:bg-slate-600"
             onClick={() => {
-              setFilters({ gameId: "", sourceId: "", itemId: "", from: "", to: "" });
+              setFilters({ gameId: "", source: "", item: "", from: "", to: "" });
               setData(null);
             }}
           >
@@ -236,15 +231,31 @@ export default function Stats() {
 
           <Card>
             <h2 className="font-semibold mb-2">Distribución por tipo</h2>
-            <p>{pieData || "Sin datos disponibles"}</p>
-          </Card>
-
-          <Card>
-            <h2 className="font-semibold mb-2">Drops por día</h2>
             <ul className="list-disc ml-5">
-              {timeseries.map((t, i) => (
-                <li key={i}>{t.date}: {t.count}</li>
-              ))}
+              {byType.length > 0 ? (
+                byType.map((t, i) => (
+                  <li key={i}>
+                    {t["source__name"]} {t.farm_type}: {t.count}
+                  </li>
+                ))
+              ) : (
+                <p className="text-slate-400">Sin datos</p>
+              )}
+            </ul>
+          </Card>
+            
+          <Card>
+            <h2 className="font-semibold mb-2">Drops promedio por día</h2>
+            <ul className="list-disc ml-5">
+              {byDay.length > 0 ? (
+                byDay.map((d, i) => (
+                  <li key={i}>
+                    {d.date}: {Number(d.avg_drops).toFixed(2)}
+                  </li>
+                ))
+              ) : (
+                <p className="text-slate-400">Sin datos</p>
+              )}
             </ul>
           </Card>
         </>
