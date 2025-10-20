@@ -28,7 +28,7 @@ class FarmSourceViewSet(viewsets.ReadOnlyModelViewSet):
         source_type = self.request.query_params.get("type")
         queryset = FarmSource.objects.filter(game__id=game_id)
         if source_type:
-            queryset = queryset.filter(type__iexact=source_type)
+           queryset = queryset.filter(source_type__iexact=source_type)
         return queryset
 
 # -------------------------------

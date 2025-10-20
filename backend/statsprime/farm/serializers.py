@@ -3,13 +3,25 @@ from .models import FarmEvent, FarmDrop, FarmSource, Game, FarmReward
 
 
 class FarmDropSerializer(serializers.ModelSerializer):
-    reward_name = serializers.CharField(source='reward.name', read_only=True)
-    rarity = serializers.CharField(source='reward.get_rarity_display', read_only=True)
+    reward_name = serializers.CharField(write_only=True)
+    rarity = serializers.CharField(write_only=True)
 
     class Meta:
         model = FarmDrop
         fields = ['reward', 'reward_name', 'rarity', 'quantity']
+        extra_kwargs = {'reward': {'read_only': True}}
 
+    def create(self, validated_data):
+        reward_name = validated_data.pop('reward_name')
+        rarity = validated_data.pop('rarity')
+        source = self.context['source']  # pasar source desde FarmEventSerializer
+
+        reward, created = FarmReward.objects.get_or_create(
+            name=reward_name,
+            rarity=rarity,
+            source=source
+        )
+        return FarmDrop.objects.create(reward=reward, **validated_data)
 
 class FarmEventSerializer(serializers.ModelSerializer):
     drops = FarmDropSerializer(many=True, required=False)
@@ -39,15 +51,15 @@ class FarmEventSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        """
-        La vista ya pasa user y game en serializer.save(),
-        así que solo manejamos los drops aquí.
-        """
         drops_data = validated_data.pop('drops', [])
         event = FarmEvent.objects.create(**validated_data)
 
         for drop_data in drops_data:
-            FarmDrop.objects.create(event=event, **drop_data)
+            drop_serializer = FarmDropSerializer(
+                data=drop_data, context={'source': event.source}
+            )
+            drop_serializer.is_valid(raise_exception=True)
+            drop_serializer.save(event=event)
 
         return event
 
