@@ -1,7 +1,7 @@
 from rest_framework import viewsets, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Sum, Avg, Count, Min, Max, F, StdDev
+from django.db.models import Sum, Avg, Count, Min, Max, F, StdDev, Prefetch
 from statistics import median
 from .models import FarmEvent, FarmReward, FarmSource, FarmDrop
 from .serializers import (
@@ -192,3 +192,40 @@ class DropRateStatsView(APIView):
             "drop_rate": round(drop_rate, 3),
             "drop_rate_by_rarity": drop_rate_by_rarity
         })
+    
+class FarmHistoryView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = FarmEventSerializer
+
+    def get_queryset(self):
+        user_param = self.request.query_params.get('user')
+        game_id = self.request.query_params.get('gameID')
+        source_id = self.request.query_params.get('sourceID')
+        type_param = self.request.query_params.get('type')
+
+        # Si se pasa ?user=, buscar ese usuario; si no, usar el autenticado
+        if user_param:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                user = User.objects.get(username=user_param)
+            except User.DoesNotExist:
+                return FarmEvent.objects.none()
+        else:
+            user = self.request.user
+
+        # Base query
+        queryset = FarmEvent.objects.filter(user=user).order_by('-date')
+
+        # Filtros opcionales
+        if game_id:
+            queryset = queryset.filter(game__id=game_id)
+        if source_id:
+            queryset = queryset.filter(source__id=source_id)
+        if type_param:
+            queryset = queryset.filter(source__type__iexact=type_param)
+
+        # Prefetch para traer los drops relacionados en una sola consulta
+        return queryset.prefetch_related(
+            Prefetch('farmdrop_set', queryset=FarmDrop.objects.select_related('reward'))
+        )
