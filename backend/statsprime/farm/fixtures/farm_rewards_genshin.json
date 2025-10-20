@@ -3767,7 +3767,7 @@
         "model": "farm.farmreward",
         "fields": {
             "name": "Final de Gladiador",
-            "rarity": "LEGENDRIO",
+            "rarity": "LEGENDARIO",
             "source": 25
         }
     },
@@ -4638,7 +4638,7 @@
         "model": "farm.farmreward",
         "fields": {
             "name": "Final de Gladiador",
-            "rarity": "LEGENDRIO",
+            "rarity": "LEGENDARIO",
             "source": 31
         }
     },
@@ -4759,7 +4759,7 @@
         "model": "farm.farmreward",
         "fields": {
             "name": "Final de Gladiador",
-            "rarity": "LEGENDRIO",
+            "rarity": "LEGENDARIO",
             "source": 32
         }
     },
@@ -5185,7 +5185,7 @@
         "model": "farm.farmreward",
         "fields": {
             "name": "Final de Gladiador",
-            "rarity": "LEGENDRIO",
+            "rarity": "LEGENDARIO",
             "source": 34
         }
     },
@@ -5322,7 +5322,7 @@
         "model": "farm.farmreward",
         "fields": {
             "name": "Final de Gladiador",
-            "rarity": "LEGENDRIO",
+            "rarity": "LEGENDARIO",
             "source": 35
         }
     },
@@ -5459,7 +5459,7 @@
         "model": "farm.farmreward",
         "fields": {
             "name": "Final de Gladiador",
-            "rarity": "LEGENDRIO",
+            "rarity": "LEGENDARIO",
             "source": 36
         }
     },
@@ -5580,7 +5580,7 @@
         "model": "farm.farmreward",
         "fields": {
             "name": "Final de Gladiador",
-            "rarity": "LEGENDRIO",
+            "rarity": "LEGENDARIO",
             "source": 37
         }
     },
@@ -5717,7 +5717,7 @@
         "model": "farm.farmreward",
         "fields": {
             "name": "Final de Gladiador",
-            "rarity": "LEGENDRIO",
+            "rarity": "LEGENDARIO",
             "source": 38
         }
     },
@@ -5838,7 +5838,7 @@
         "model": "farm.farmreward",
         "fields": {
             "name": "Final de Gladiador",
-            "rarity": "LEGENDRIO",
+            "rarity": "LEGENDARIO",
             "source": 39
         }
     },
@@ -8306,5 +8306,294 @@
             "rarity": "EPICO", 
             "source": 50
         }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Flor del milagro", 
+            "rarity": "RARO", 
+            "source": 51
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Flor del milagro", 
+            "rarity": "EPICO", 
+            "source": 51
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Flor de la médica itinerante", 
+            "rarity": "POCO COMUN", 
+            "source": 51
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Flor de la médica itinerante", 
+            "rarity": "RARO", 
+            "source": 51
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Flor de la doncella amada", 
+            "rarity": "EPICO", 
+            "source": 51
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Flor de la doncella amada", 
+            "rarity": "LEGENDARIO", 
+            "source": 51
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Flor de la sombra verde esmeralda", 
+            "rarity": "EPICO", 
+            "source": 51
+        }
+    },
+    
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Flor de la sombra verde esmeralda", 
+            "rarity": "LEGENDARIO", 
+            "source": 51
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Mora", 
+            "rarity": "COMUN", 
+            "source": 51
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Fragmento de azulejo de Decarabian", 
+            "rarity": "POCO COMUN", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Escombro de de la ciudad de Decarabian", 
+            "rarity": "RARO", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Fragmento de epopeya de Decarabian", 
+            "rarity": "EPICO", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Fragmento de sueño de Decarabian", 
+            "rarity": "LEGENDARIO", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Diente de leche de lobo boreal", 
+            "rarity": "POCO COMUN", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Diente roto de lobo boreal", 
+            "rarity": "RARO", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Colmillo de lobo boreal", 
+            "rarity": "EPICO", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Nostalgia del lobo boreal", 
+            "rarity": "LEGENDARIO", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Grilletes de diente de leon", 
+            "rarity": "POCO COMUN", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Cadena de diente de leon", 
+            "rarity": "RARO", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Esposas de diente de leon", 
+            "rarity": "EPICO", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Ideales de diente de leon", 
+            "rarity": "LEGENDARIO", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Mora", 
+            "rarity": "COMUN", 
+            "source": 52
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Enseñanzas de la libertad", 
+            "rarity": "POCO COMUN", 
+            "source": 53
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Guia de la libertad", 
+            "rarity": "RARO", 
+            "source": 53
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Filosofia de la libertad", 
+            "rarity": "EPICO", 
+            "source": 53
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Enseñanzas de la resistencia", 
+            "rarity": "POCO COMUN", 
+            "source": 53
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Guia de la resistencia", 
+            "rarity": "RARO", 
+            "source": 53
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Filosofia de la resistencia", 
+            "rarity": "EPICO", 
+            "source": 53
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Enseñanzas de la poesia", 
+            "rarity": "POCO COMUN", 
+            "source": 53
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Guia de la poesia", 
+            "rarity": "RARO", 
+            "source": 53
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Filosofia de la poesia", 
+            "rarity": "EPICO", 
+            "source": 53
+        }
+    },
+
+    {
+        "model": "farm.farmreward",
+        "fields": { 
+            "name": "Mora", 
+            "rarity": "COMUN", 
+            "source": 53
+        }
     }
+
 ]   

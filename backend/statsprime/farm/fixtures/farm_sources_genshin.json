@@ -471,7 +471,7 @@
     {
         "model": "farm.farmsource",
         "fields": {
-            "name": "Guarida del Lobo del Norte",
+            "name": "Cañon del olvido",
             "location": "Mondstadt",
             "source_type": "DOMINIO-TALENTO",
             "game": 1
