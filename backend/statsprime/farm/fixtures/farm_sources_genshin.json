@@ -448,5 +448,170 @@
             "source_type": "JEFE-SEMANAL",
             "game": 1
         }
+    },
+        
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Valle de los Recuerdos",
+            "location": "Mondstadt",
+            "source_type": "DOMINIO-ARTEFACTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Jardín de Cecilia",
+            "location": "Mondstadt",
+            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Guarida del Lobo del Norte",
+            "location": "Mondstadt",
+            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Palacio Oculto de Lianshan",
+            "location": "Liyue",
+            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Mansión Taishan",
+            "location": "Liyue",
+            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Cámara Oculta de Guyun",
+            "location": "Liyue",
+            "source_type": "DOMINIO-ARTEFACTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Jardín del Veredicto",
+            "location": "Inazuma",
+            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Corazón de la Flama",
+            "location": "Inazuma",
+            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Momiji-Dyed Court",
+            "location": "Inazuma",
+            "source_type": "DOMINIO-ARTEFACTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Torre de la Ignorancia",
+            "location": "Sumeru",
+            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Estatua del Conflicto",
+            "location": "Sumeru",
+            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Espacio del Alma",
+            "location": "Sumeru",
+            "source_type": "DOMINIO-ARTEFACTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Ecos de las Mareas Profundas",
+            "location": "Fontaine",
+            "source_type": "DOMINIO-ARTEFACTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Ecos del Maremoto",
+            "location": "Fontaine",
+            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Catarata del Esplendor",
+            "location": "Fontaine",
+            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Ciudadela del Abismo Llameante",
+            "location": "Natlan",
+            "source_type": "DOMINIO-ARTEFACTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Altar de las Llamas Antiguas",
+            "location": "Natlan",
+            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "game": 1
+        }
+    },
+    {
+        "model": "farm.farmsource",
+        "fields": {
+            "name": "Sacro Juicio de la Llama",
+            "location": "Natlan",
+            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "game": 1
+        }
     }
+
+
 ]
