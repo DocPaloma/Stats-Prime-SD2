@@ -111,15 +111,10 @@ WSGI_APPLICATION = 'statsprime.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'statsprime_db',      # nombre de tu base de datos
-        'USER': 'postgres',           # tu usuario de PostgreSQL
-        'PASSWORD': 'admin123',  # tu contraseña
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 
 # Password validation
