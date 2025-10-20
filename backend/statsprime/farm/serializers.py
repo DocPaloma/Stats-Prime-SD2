@@ -63,4 +63,9 @@ class FarmSourceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FarmSource
-        fields = ['id', 'name', 'location', 'source_type', 'rewards']
+        fields = ['id', 'name', 'location', 'source_type', 'rewards']    
+
+class GameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Game
+        fields = ['id', 'name']

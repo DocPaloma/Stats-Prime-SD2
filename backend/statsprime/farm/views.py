@@ -9,8 +9,12 @@ from .serializers import (
     FarmDropSerializer,
     FarmSourceSerializer,
     FarmRewardSerializer,
+    GameSerializer,
 )
 
+# -------------------------------
+# Eventos de farmeo
+# -------------------------------
 class FarmEventViewSet(viewsets.ModelViewSet):
     serializer_class = FarmEventSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -19,19 +23,10 @@ class FarmEventViewSet(viewsets.ModelViewSet):
         game_id = self.kwargs.get('game_id')
         user = self.request.user
         return FarmEvent.objects.filter(user=user, game__id=game_id)
-
-
-# Listar todos los jefes (fuentes) del juego seleccionado
-class FarmSourceViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = FarmSourceSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        game_id = self.kwargs.get('game_id')
-        return FarmSource.objects.filter(game__id=game_id).prefetch_related('rewards')
-
-
+    
+# -------------------------------
 # Listar las recompensas posibles de un jefe específico dentro de un juego
+# -------------------------------
 class FarmSourceRewardsView(generics.ListAPIView):
     serializer_class = FarmRewardSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -41,6 +36,9 @@ class FarmSourceRewardsView(generics.ListAPIView):
         source_id = self.kwargs.get('source_id')
         return FarmReward.objects.filter(source__id=source_id, source__game__id=game_id)
 
+# -------------------------------
+# Estadísticas generales de farmeo
+# -------------------------------
 class FarmStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -132,7 +130,9 @@ class FarmStatsView(APIView):
             "stats": drops_grouped
         })
     
-# Nueva vista: cálculo de probabilidad de drop
+# --------------------
+# Probabilidad de drop
+# --------------------
 class DropRateStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -172,16 +172,17 @@ class DropRateStatsView(APIView):
         drop_rate = events_with_item / total_events if total_events else 0
 
         # --- Drop rate por rareza ---
-        drop_rate_by_rarity = []
         rarity_data = drops_qs.values("reward__rarity").annotate(
             event_count=Count("event", distinct=True)
         )
 
-        for r in rarity_data:
-            drop_rate_by_rarity.append({
+        drop_rate_by_rarity = [
+            {
                 "rarity": r["reward__rarity"],
                 "drop_rate": round(r["event_count"] / total_events, 3)
-            })
+            }
+            for r in rarity_data
+        ]
 
         return Response({
             "game_id": game_id,
@@ -193,6 +194,9 @@ class DropRateStatsView(APIView):
             "drop_rate_by_rarity": drop_rate_by_rarity
         })
     
+# ---------------------
+# Historial de eventos
+# ---------------------
 class FarmHistoryView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = FarmEventSerializer
@@ -229,3 +233,11 @@ class FarmHistoryView(generics.ListAPIView):
         return queryset.prefetch_related(
             Prefetch('farmdrop_set', queryset=FarmDrop.objects.select_related('reward'))
         )
+    
+# -----------------------
+# Vista de Juegos (nueva)
+# -----------------------
+class GameViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Game.objects.all()
+    serializer_class = GameSerializer
+    permission_classes = [permissions.IsAuthenticated]
