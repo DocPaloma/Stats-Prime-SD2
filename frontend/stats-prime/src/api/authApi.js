@@ -16,13 +16,8 @@ const authApi = {
   getProfile: () =>
     axiosClient.get("users/profile/"),
 
-  // 🔄 Recuperación por correo
-  forgotPassword: (email) =>
-    publicApi.post("users/password-reset-email/", { email }),
-
-  // ✅ Confirmar nueva contraseña con token
-  resetPasswordConfirm: (token, password) =>
-    publicApi.post("users/password-reset-confirm/", { token, password }),
+  getSecretQuestion: (username) =>
+    publicApi.get(`users/secret-question/?username=${username}`),
 
   // 🧩 Alternativa: pregunta secreta (si la usas)
   resetPasswordBySecret: (username, secret_answer, new_password) =>

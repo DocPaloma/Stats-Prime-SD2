@@ -4,233 +4,163 @@ import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import Button from "../components/ui/Button";
-import { getUserProfile, updateUserProfile, changePassword } from "../api/profileApi";
+import { getUserProfile, updateUserProfile } from "../api/profileApi";
 
 export default function EditProfile() {
   const navigate = useNavigate();
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-
-  // Datos de perfil
   const [form, setForm] = useState({
     username: "",
-    first_name: "",
-    last_name: "",
+    email: "",
     secret_question: "",
     secret_answer: "",
+    current_password: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // Sección cambio de contraseña (opcional)
-  const [pwd, setPwd] = useState({
-    current: "",
-    newp: "",
-    confirm: "",
-  });
-
+  // 🧠 Cargar perfil actual
   useEffect(() => {
-    (async () => {
+    const fetchProfile = async () => {
       try {
+        setLoading(true);
         const data = await getUserProfile();
-        setForm({
+        setForm((prev) => ({
+          ...prev,
           username: data.username || "",
-          first_name: data.first_name || "",
-          last_name: data.last_name || "",
+          email: data.email || "",
           secret_question: data.secret_question || "",
-          secret_answer: "", // no traemos la respuesta guardada por seguridad
-        });
+          secret_answer: "", // nunca se muestra
+        }));
       } catch (err) {
-        setError(
-          err?.response?.data?.detail || err?.message || "No se pudo cargar."
-        );
+        console.error(err);
+        setError("No se pudieron cargar los datos del perfil.");
       } finally {
-        setProfileLoading(false);
+        setLoading(false);
       }
-    })();
+    };
+    fetchProfile();
   }, []);
 
-  const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-  const onChangePwd = (e) => setPwd((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const onSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
 
-    // Validaciones básicas
-    if (!form.username.trim()) {
-      setError("El nombre de usuario es obligatorio.");
+    if (!form.current_password.trim()) {
+      setError("Debes ingresar tu contraseña actual para confirmar los cambios.");
       return;
-    }
-    if (pwd.newp || pwd.confirm || pwd.current) {
-      if (!pwd.current || !pwd.newp || !pwd.confirm) {
-        setError("Para cambiar la contraseña, completa todos los campos de la sección de contraseña.");
-        return;
-      }
-      if (pwd.newp !== pwd.confirm) {
-        setError("La confirmación de la nueva contraseña no coincide.");
-        return;
-      }
     }
 
     try {
       setSaving(true);
-
-      // 1) Actualizar perfil
-      await updateUserProfile({
+      const updatedData = {
         username: form.username,
-        first_name: form.first_name,
-        last_name: form.last_name,
-        secret_question: form.secret_question || null,
-        // sólo mandamos secret_answer si se escribió algo
-        ...(form.secret_answer ? { secret_answer: form.secret_answer } : {}),
-      });
-
-      // 2) Cambiar contraseña (si la sección fue usada)
-      if (pwd.newp) {
-        await changePassword(pwd.current, pwd.newp, pwd.confirm);
-      }
-
-      navigate("/profile");
+        email: form.email,
+        secret_question: form.secret_question,
+        secret_answer: form.secret_answer,
+        current_password: form.current_password,
+      };
+      const data = await updateUserProfile(updatedData);
+      setSuccess(data.detail || "Perfil actualizado correctamente.");
+      setForm((prev) => ({ ...prev, current_password: "", secret_answer: "" }));
     } catch (err) {
-      setError(
-        err?.response?.data?.detail ||
-          (err?.response?.data && JSON.stringify(err.response.data)) ||
-          err?.message ||
-          "No se pudo guardar."
-      );
+      const msg = err.response?.data?.detail || "No se pudo actualizar el perfil.";
+      setError(msg);
     } finally {
       setSaving(false);
     }
   };
 
-  if (profileLoading) return <p className="text-slate-400">Cargando…</p>;
+  if (loading) {
+    return (
+      <section className="grid place-items-center min-h-screen">
+        <p className="text-slate-400">Cargando datos...</p>
+      </section>
+    );
+  }
 
   return (
-    <section className="grid place-items-center">
-      <Card className="w-full max-w-xl">
-        <h1 className="text-2xl font-semibold">Editar perfil</h1>
-        <p className="text-slate-400 text-sm mt-1">Actualiza tu información básica.</p>
+    <section className="grid place-items-center min-h-screen p-4">
+      <Card className="w-full max-w-lg">
+        <h1 className="text-2xl font-semibold mb-2">Editar perfil</h1>
+        <p className="text-slate-400 text-sm mb-4">
+          Actualiza tu información personal. Para confirmar los cambios, ingresa tu contraseña actual.
+        </p>
 
-        {error && <div className="alert-error mt-4">{error}</div>}
+        {error && <div className="alert-error mb-4">{error}</div>}
+        {success && <div className="alert-success mb-4">{success}</div>}
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-6">
-          {/* ---------------- Datos básicos ---------------- */}
-          <div className="space-y-4">
-            <div>
-              <Label>Nombre de usuario</Label>
-              <Input
-                name="username"
-                value={form.username}
-                onChange={onChange}
-                placeholder="Tu username"
-              />
-            </div>
-
-            <div>
-              <Label>Nombre</Label>
-              <Input
-                name="first_name"
-                value={form.first_name}
-                onChange={onChange}
-                placeholder="Tu nombre"
-              />
-            </div>
-
-            <div>
-              <Label>Apellido</Label>
-              <Input
-                name="last_name"
-                value={form.last_name}
-                onChange={onChange}
-                placeholder="Tu apellido"
-              />
-            </div>
-
-            <div>
-              <Label>Pregunta secreta (opcional)</Label>
-              <select
-                name="secret_question"
-                value={form.secret_question || ""}
-                onChange={onChange}
-                className="select-dark"
-              >
-                <option value="" disabled hidden>
-                  Selecciona una pregunta
-                </option>
-                <option value="nombre_mascota">
-                  ¿Cuál era el nombre de tu primera mascota?
-                </option>
-                <option value="comida_favorita">¿Cuál es tu comida favorita?</option>
-                <option value="ciudad_nacimiento">¿En qué ciudad naciste?</option>
-              </select>
-            </div>
-
-            <div>
-              <Label>Respuesta secreta (opcional)</Label>
-              <Input
-                name="secret_answer"
-                value={form.secret_answer}
-                onChange={onChange}
-                placeholder="Escribe tu respuesta secreta"
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                Guarda una respuesta que recuerdes. Se usará para recuperar tu cuenta.
-              </p>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Nombre de usuario</Label>
+            <Input
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              required
+            />
           </div>
 
-          {/* ---------------- Cambio de contraseña (opcional) ---------------- */}
-          <div className="border-t border-slate-800 pt-6 space-y-4">
-            <h2 className="font-semibold">Cambiar contraseña (opcional)</h2>
-
-            <div>
-              <Label>Contraseña actual</Label>
-              <Input
-                type="password"
-                name="current"
-                value={pwd.current}
-                onChange={onChangePwd}
-                placeholder="Tu contraseña actual"
-              />
-            </div>
-
-            <div>
-              <Label>Nueva contraseña</Label>
-              <Input
-                type="password"
-                name="newp"
-                value={pwd.newp}
-                onChange={onChangePwd}
-                placeholder="Nueva contraseña"
-              />
-            </div>
-
-            <div>
-              <Label>Confirmar nueva contraseña</Label>
-              <Input
-                type="password"
-                name="confirm"
-                value={pwd.confirm}
-                onChange={onChangePwd}
-                placeholder="Repite la nueva contraseña"
-              />
-            </div>
+          <div>
+            <Label>Correo electrónico</Label>
+            <Input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
           </div>
 
-          <div className="flex gap-2">
-            <Button className="w-full" disabled={saving}>
-              {saving ? "Guardando..." : "Guardar cambios"}
-            </Button>
-            <Button
-              type="button"
-              className="w-full bg-slate-700 hover:bg-slate-600"
-              onClick={() => navigate("/profile")}
-              disabled={saving}
-            >
-              Cancelar
-            </Button>
+          <div>
+            <Label>Pregunta secreta</Label>
+            <Input
+              name="secret_question"
+              value={form.secret_question}
+              onChange={handleChange}
+              placeholder="Ej: ¿Nombre de tu primera mascota?"
+            />
           </div>
+
+          <div>
+            <Label>Respuesta secreta</Label>
+            <Input
+              name="secret_answer"
+              value={form.secret_answer}
+              onChange={handleChange}
+              placeholder="Tu respuesta secreta"
+            />
+          </div>
+
+          <div>
+            <Label>Contraseña actual</Label>
+            <Input
+              type="password"
+              name="current_password"
+              value={form.current_password}
+              onChange={handleChange}
+              placeholder="Confirma con tu contraseña actual"
+              required
+            />
+          </div>
+
+          <Button className="w-full" disabled={saving}>
+            {saving ? "Guardando..." : "Guardar cambios"}
+          </Button>
         </form>
+
+        <div className="text-center mt-6">
+          <Button variant="outline" onClick={() => navigate("/profile")}>
+            Volver al perfil
+          </Button>
+        </div>
       </Card>
     </section>
   );

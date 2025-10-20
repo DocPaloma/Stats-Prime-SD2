@@ -11,15 +11,6 @@ export const updateUserProfile = async (updatedData) => {
   return res.data;
 };
 
-export const changePassword = async (current_password, new_password, confirm_password) => {
-  const res = await axiosClient.post("users/change-password/", {
-    current_password,
-    new_password,
-    confirm_password,
-  });
-  return res.data;
-};
-
 export const deleteUserAccount = async (password) => {
   const res = await axiosClient.delete("users/profile/", { data: { password } });
   return res.data;
