@@ -48,6 +48,10 @@ class ProfileView(APIView):
         if new_secret:
             user.set_secret_answer(new_secret)
 
+        # Cambiar contraseña (opcional)
+        new_password = data.get('new_password')
+        if new_password:
+            user.set_password(new_password)
 
         user.save()
         return Response(ProfileSerializer(user).data)
