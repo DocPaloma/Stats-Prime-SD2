@@ -1,8 +1,7 @@
 from rest_framework import viewsets, permissions, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Sum, Avg, Count, Min, Max, F
-from django.db.models.functions import StdDev
+from django.db.models import Sum, Avg, Count, Min, Max, F, StdDev
 from statistics import median
 from .models import FarmEvent, FarmReward, FarmSource, FarmDrop
 from .serializers import (
@@ -69,6 +68,15 @@ class FarmStatsView(APIView):
         elif end_date:
             events = events.filter(date__lte=end_date)
 
+        # Si no hay fechas, calcular automáticamente el rango real
+        if not start_date or not end_date:
+            date_bounds = events.aggregate(
+                min_date=Min('date'),
+                max_date=Max('date')
+            )
+            start_date = start_date or (date_bounds['min_date'].isoformat() if date_bounds['min_date'] else None)
+            end_date = end_date or (date_bounds['max_date'].isoformat() if date_bounds['max_date'] else None)
+
         # Drops relacionados
         drops = FarmDrop.objects.filter(event__in=events)
         if item_id:
@@ -122,4 +130,65 @@ class FarmStatsView(APIView):
                 "avg_drops": round(avg_drops, 2),
             },
             "stats": drops_grouped
+        })
+    
+# Nueva vista: cálculo de probabilidad de drop
+class DropRateStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, game_id):
+        user = request.user
+        source_id = request.query_params.get("sourceID")
+        item_id = request.query_params.get("itemID")
+
+        if not source_id:
+            return Response({"error": "Se requiere el parámetro sourceID."}, status=400)
+
+        # Eventos del usuario para esa fuente
+        total_events = FarmEvent.objects.filter(
+            user=user, game__id=game_id, source__id=source_id
+        ).count()
+
+        if total_events == 0:
+            return Response({
+                "message": "No hay eventos registrados para esta fuente.",
+                "drop_rate": 0
+            })
+
+        # Eventos en los que cayó el ítem (si se especifica)
+        drops_qs = FarmDrop.objects.filter(
+            event__user=user,
+            event__game__id=game_id,
+            event__source__id=source_id
+        )
+
+        if item_id:
+            drops_qs = drops_qs.filter(reward__id=item_id)
+
+        # Número de eventos únicos donde cayó ese ítem
+        events_with_item = drops_qs.values("event").distinct().count()
+
+        # Drop rate base
+        drop_rate = events_with_item / total_events if total_events else 0
+
+        # --- Drop rate por rareza ---
+        drop_rate_by_rarity = []
+        rarity_data = drops_qs.values("reward__rarity").annotate(
+            event_count=Count("event", distinct=True)
+        )
+
+        for r in rarity_data:
+            drop_rate_by_rarity.append({
+                "rarity": r["reward__rarity"],
+                "drop_rate": round(r["event_count"] / total_events, 3)
+            })
+
+        return Response({
+            "game_id": game_id,
+            "source_id": source_id,
+            "item_id": item_id,
+            "total_events": total_events,
+            "events_with_item": events_with_item,
+            "drop_rate": round(drop_rate, 3),
+            "drop_rate_by_rarity": drop_rate_by_rarity
         })
