@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db.models import Sum, Avg, Count, Min, Max, F, StdDev, Prefetch
 from statistics import median
-from .models import FarmEvent, FarmReward, FarmSource, FarmDrop
+from .models import FarmEvent, FarmReward, FarmSource, FarmDrop, Game
 from .serializers import (
     FarmEventSerializer,
     FarmDropSerializer,
@@ -13,6 +13,25 @@ from .serializers import (
 )
 
 # -------------------------------
+# Fuentes de farmeo (jefes, dominios, etc.)
+# -------------------------------
+class FarmSourceViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Lista las fuentes (jefes, dominios, etc.) de un juego específico.
+    Permite filtrar por tipo si se desea (?type=jefe / ?type=dominio)
+    """
+    serializer_class = FarmSourceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        game_id = self.kwargs.get("game_pk")
+        source_type = self.request.query_params.get("type")
+        queryset = FarmSource.objects.filter(game__id=game_id)
+        if source_type:
+            queryset = queryset.filter(type__iexact=source_type)
+        return queryset
+
+# -------------------------------
 # Eventos de farmeo
 # -------------------------------
 class FarmEventViewSet(viewsets.ModelViewSet):
@@ -20,9 +39,21 @@ class FarmEventViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        game_id = self.kwargs.get('game_id')
-        user = self.request.user
-        return FarmEvent.objects.filter(user=user, game__id=game_id)
+        game_id = self.kwargs.get("game_pk")
+        return FarmEvent.objects.filter(game_id=game_id)
+
+    def perform_create(self, serializer):
+        game_id = self.kwargs.get("game_pk")
+        if not game_id:
+            raise serializers.ValidationError({"non_field_errors": ["El ID del juego es requerido en la URL."]})
+
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            raise serializers.ValidationError({"game": ["El juego especificado no existe."]})
+
+        serializer.save(user=self.request.user, game=game)
+
     
 # -------------------------------
 # Listar las recompensas posibles de un jefe específico dentro de un juego
@@ -128,6 +159,51 @@ class FarmStatsView(APIView):
                 "avg_drops": round(avg_drops, 2),
             },
             "stats": drops_grouped
+        })
+    
+# -----------------------------
+# Estadísticas personales por juego
+# -----------------------------
+class UserStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        game_id = request.query_params.get("game_id")
+
+        if not game_id:
+            return Response({"error": "Debe especificar un game_id."}, status=400)
+
+        # Filtrar solo eventos del usuario y del juego seleccionado
+        events = FarmEvent.objects.filter(user=user, game__id=game_id)
+        drops = FarmDrop.objects.filter(event__in=events)
+
+        total_events = events.count()
+        total_drops = drops.aggregate(total=Sum("quantity"))["total"] or 0
+        avg_drops = drops.aggregate(avg=Avg("quantity"))["avg"] or 0
+
+        # Agrupar por ítem
+        drops_grouped = (
+            drops.values("reward__name", "reward__rarity")
+            .annotate(
+                total_quantity=Sum("quantity"),
+                avg_quantity=Avg("quantity"),
+                min_quantity=Min("quantity"),
+                max_quantity=Max("quantity"),
+                drop_count=Count("id"),
+            )
+            .order_by("-total_quantity")
+        )
+
+        return Response({
+            "user": user.username,
+            "game_id": game_id,
+            "summary": {
+                "total_events": total_events,
+                "total_drops": total_drops,
+                "avg_drops": round(avg_drops, 2),
+            },
+            "drops": drops_grouped,
         })
     
 # --------------------
@@ -241,3 +317,4 @@ class GameViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Game.objects.all()
     serializer_class = GameSerializer
     permission_classes = [permissions.IsAuthenticated]
+

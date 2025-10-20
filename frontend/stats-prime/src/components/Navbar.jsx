@@ -42,7 +42,7 @@ export default function Navbar() {
               className="h-9 w-9 rounded-xl object-contain select-none shadow-[0_0_0_1px_rgba(99,102,241,.25)] group-hover:scale-[1.03] transition"
               decoding="async"
               loading="eager"
-              fetchPriority="high"
+              fetchpriority="high"
             />
             <span className="text-lg md:text-xl font-semibold tracking-tight leading-none">
               <span className="text-slate-200">Stats</span>

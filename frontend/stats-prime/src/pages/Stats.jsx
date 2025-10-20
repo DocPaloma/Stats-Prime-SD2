@@ -1,24 +1,15 @@
-// src/pages/Stats.jsx
 import { useEffect, useMemo, useState } from "react";
+import { getGames } from "../api/farmEvents";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import Button from "../components/ui/Button";
 import axiosClient from "../api/axiosClient";
 
-
-// Recharts (gráficas)
-import {
-  ResponsiveContainer,
-  LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
-  BarChart, Bar,
-  PieChart, Pie, Cell, Legend,
-} from "recharts";
-
 /* ==========================
-   Caché simple en memoria (HU-73)
+   Caché simple (HU-73)
    ========================== */
-const CACHE = new Map(); // Map<key, {value, expiresAt}>
+const CACHE = new Map();
 const TTL_10_MIN = 10 * 60 * 1000;
 
 function cacheKeyFromFilters(filters) {
@@ -43,6 +34,7 @@ function cacheSet(key, value, ttlMs = TTL_10_MIN) {
 export default function Stats() {
   // Filtros
   const [filters, setFilters] = useState({
+    gameId: "",
     sourceId: "",
     itemId: "",
     from: "",
@@ -51,27 +43,45 @@ export default function Stats() {
 
   // Estado de datos
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [games, setGames] = useState([]);
 
-  // KPIs y series (con valores por defecto)
-  const totals = data?.totals || { drops: 0, uniques: 0, runs: 0 };
-  const byType = data?.byType || [];
-  const byRarity = data?.byRarity || [];
-  const timeseries = data?.timeseries || [];
+  // Adaptación a la estructura del backend (UserStatsView)
+  const totals = useMemo(() => ({
+    drops: data?.summary?.total_drops || 0,
+    uniques: data?.drops?.length || 0,
+    runs: data?.summary?.total_events || 0,
+  }), [data]);
+
+  // Agrupamos por rareza para la lista textual
+  const byRarity = useMemo(() => {
+    if (!data?.drops) return [];
+    const grouped = {};
+    for (const d of data.drops) {
+      const rarity = d.reward__rarity || "Desconocido";
+      grouped[rarity] = (grouped[rarity] || 0) + d.total_quantity;
+    }
+    return Object.entries(grouped).map(([rarity, count]) => ({ rarity, count }));
+  }, [data]);
+
+  // No hay "byType" ni "timeseries" en el backend, así que dejamos vacío
+  const byType = [];
+  const timeseries = [];
+
 
   const onChange = (e) => {
     const { name, value } = e.target;
     setFilters((f) => ({ ...f, [name]: value }));
   };
 
+  // Obtener estadísticas
   const fetchStats = async () => {
+    if (!filters.gameId) return;
     setLoading(true);
     setErr("");
     try {
       const key = cacheKeyFromFilters(filters);
-
-      // 1) Intento caché
       const cached = cacheGet(key);
       if (cached) {
         setData(cached);
@@ -79,17 +89,17 @@ export default function Stats() {
         return;
       }
 
-      // 2) Llamada real (HU-72 base de datos)
-      // Espera respuesta con shape:
-      // {
-      //   totals: { drops, uniques, runs },
-      //   byType: [{ type, count }],
-      //   byRarity: [{ rarity, count }],
-      //   timeseries: [{ date, count }]
-      // }
-      const res = await axiosClient.get("stats", { params: filters });
-      const fresh = res.data;
+    const res = await axiosClient.get(`user-stats/`, {
+      params: {
+        game_id: filters.gameId,
+        source_id: filters.sourceId || undefined,
+        item_id: filters.itemId || undefined,
+        start_date: filters.from || undefined,
+        end_date: filters.to || undefined,
+      },
+    });
 
+      const fresh = res.data;
       setData(fresh);
       cacheSet(key, fresh, TTL_10_MIN);
     } catch (e) {
@@ -104,31 +114,49 @@ export default function Stats() {
   };
 
   useEffect(() => {
-    // Carga inicial sin filtros
-    fetchStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const fetchGames = async () => {
+      const data = await getGames();
+      setGames(data);
+    };
+    fetchGames();
   }, []);
 
-  // Dona por tipo
+  // Datos procesados (sin gráficas)
   const pieData = useMemo(
-    () => byType.map((d) => ({ name: d.type, value: d.count })),
+    () => byType.map((d) => `${d.type}: ${d.count}`).join(", "),
     [byType]
   );
-  const COLORS = ["#6366F1", "#22C55E", "#F59E0B", "#EF4444", "#10B981", "#3B82F6"];
 
   return (
     <section className="space-y-6">
       <header className="space-y-2">
-        <h1 className="title">Estadísticas</h1>
+        <h1 className="title">Estadísticas personales</h1>
         <p className="muted">
-          Dashboard con filtros, KPIs y gráficas. Resultados se cachean por 10 min.
+          Visualiza tus estadísticas de drops, runs y rarezas por juego. Los datos se cachean por 10 minutos.
         </p>
       </header>
 
       {/* Filtros */}
       <Card>
         <h2 className="font-semibold mb-3">Filtros</h2>
-        <div className="grid md:grid-cols-4 gap-3">
+        <div className="grid md:grid-cols-5 gap-3">
+          <div>
+            <Label>Juego</Label>
+            <select
+              name="gameId"
+              value={filters.gameId}
+              onChange={onChange}
+              className="w-full p-2 rounded border border-slate-300 bg-slate-800 text-slate-100"
+            >
+              <option value="">Seleccionar...</option>
+              {games.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <Label>Fuente (sourceId)</Label>
             <Input
@@ -156,12 +184,15 @@ export default function Stats() {
             <Input type="date" name="to" value={filters.to} onChange={onChange} />
           </div>
         </div>
+
         <div className="mt-4 flex gap-2">
-          <Button onClick={fetchStats}>Aplicar filtros</Button>
+          <Button onClick={fetchStats} disabled={!filters.gameId}>
+            Aplicar filtros
+          </Button>
           <Button
             className="bg-slate-700 hover:bg-slate-600"
             onClick={() => {
-              setFilters({ sourceId: "", itemId: "", from: "", to: "" });
+              setFilters({ gameId: "", sourceId: "", itemId: "", from: "", to: "" });
               setData(null);
             }}
           >
@@ -170,9 +201,11 @@ export default function Stats() {
         </div>
       </Card>
 
+      {/* Estados */}
       {loading && <p className="text-slate-400">Cargando estadísticas…</p>}
       {err && <div className="alert-error">{err}</div>}
 
+      {/* Datos */}
       {data && !loading && !err && (
         <>
           {/* KPIs */}
@@ -191,61 +224,28 @@ export default function Stats() {
             </Card>
           </div>
 
-          {/* Serie temporal */}
+          {/* Información textual en lugar de gráficos */}
           <Card>
-            <h2 className="font-semibold mb-3">Drops por día</h2>
-            <div style={{ width: "100%", height: 300 }}>
-              <ResponsiveContainer>
-                <LineChart data={timeseries}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="count" stroke="#6366F1" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <h2 className="font-semibold mb-2">Drops por rareza</h2>
+            <ul className="list-disc ml-5">
+              {byRarity.map((r, i) => (
+                <li key={i}>{r.rarity}: {r.count}</li>
+              ))}
+            </ul>
           </Card>
 
-          {/* Barras por rareza */}
           <Card>
-            <h2 className="font-semibold mb-3">Drops por rareza</h2>
-            <div style={{ width: "100%", height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart data={byRarity}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="rarity" />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#22C55E" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <h2 className="font-semibold mb-2">Distribución por tipo</h2>
+            <p>{pieData || "Sin datos disponibles"}</p>
           </Card>
 
-          {/* Dona por tipo */}
           <Card>
-            <h2 className="font-semibold mb-3">Distribución por tipo</h2>
-            <div style={{ width: "100%", height: 320 }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={70}
-                    outerRadius={110}
-                    paddingAngle={2}
-                  >
-                    {pieData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            <h2 className="font-semibold mb-2">Drops por día</h2>
+            <ul className="list-disc ml-5">
+              {timeseries.map((t, i) => (
+                <li key={i}>{t.date}: {t.count}</li>
+              ))}
+            </ul>
           </Card>
         </>
       )}

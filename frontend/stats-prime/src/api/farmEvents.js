@@ -1,29 +1,22 @@
+// src/api/farmEvents.js
 import axiosClient from "./axiosClient";
 
-export const getFarmEvents = async (gameIdDB) => {
-    const response = await axios.get(`${API_BASE_URL}/games/${gameIdDB}/farm-events/`, {
-        headers: {
-            ...authHeaders(),
-        },
-    });
-    return response.data;
+export const getGames = async () => {
+  const response = await axiosClient.get("games/");
+  return response.data;
+};
 
+export const getFarmEvents = async (gameIdDB) => {
+  const response = await axiosClient.get(`games/${gameIdDB}/farm-events/`);
+  return response.data;
 };
 
 export const createFarmEvent = async (gameIdDB, eventData) => {
-    const response = await axios.post(`${API_BASE_URL}/games/${gameIdDB}/farm-events/`, eventData, {
-        headers: {
-            ...authHeaders(),
-        },
-    });
-    return response.data;
+  const response = await axiosClient.post(`games/${gameIdDB}/farm-events/`, eventData);
+  return response.data;
 };
 
-const deleteFarmEvent = async (gameIdDB, eventId) => {
-    const response = await axios.delete(`${API_BASE_URL}/games/${gameIdDB}/farm-events/${eventId}/`, {
-        headers: {
-            ...authHeaders(),
-        },
-    });
-    return response.data;
+export const deleteFarmEvent = async (gameIdDB, eventId) => {
+  const response = await axiosClient.delete(`games/${gameIdDB}/farm-events/${eventId}/`);
+  return response.data;
 };

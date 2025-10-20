@@ -20,8 +20,10 @@ class FarmEventSerializer(serializers.ModelSerializer):
         fields = ['id', 'farm_type', 'source', 'date', 'drops', 'total_drops']
 
     def validate(self, data):
-        request = self.context.get('request')
-        game_id = self.context.get('view').kwargs.get('game_id')
+        game_id = (
+            self.context.get('view').kwargs.get('game_id')
+            or self.context.get('view').kwargs.get('game_pk')
+        )
 
         if not game_id:
             raise serializers.ValidationError("El ID del juego es requerido en la URL.")
@@ -37,14 +39,13 @@ class FarmEventSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        user = self.context['request'].user
-        game_id = self.context['view'].kwargs.get('game_id')
-        game = Game.objects.get(id=game_id)
-
+        """
+        La vista ya pasa user y game en serializer.save(),
+        así que solo manejamos los drops aquí.
+        """
         drops_data = validated_data.pop('drops', [])
-        event = FarmEvent.objects.create(user=user, game=game, **validated_data)
+        event = FarmEvent.objects.create(**validated_data)
 
-        # Crear drops (si se enviaron)
         for drop_data in drops_data:
             FarmDrop.objects.create(event=event, **drop_data)
 
