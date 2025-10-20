@@ -28,3 +28,14 @@ class FarmEventSerializer(serializers.ModelSerializer):
         game_id = self.context['view'].kwargs.get('game_id')
         game = Game.objects.get(id=game_id)
         return FarmEvent.objects.create(user=user, game=game, **validated_data)
+    
+class FarmSourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FarmSource
+        fields = ['name', 'location', 'source_type', 'game']
+
+
+class GameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Game
+        fields = ['id', 'name']
