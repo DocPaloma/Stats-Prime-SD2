@@ -1,10 +1,23 @@
 from rest_framework import serializers
-from .models import FarmEvent, FarmSource, Game
+from .models import FarmEvent, FarmDrop, FarmSource, Game, FarmReward
+
+
+class FarmDropSerializer(serializers.ModelSerializer):
+    reward_name = serializers.CharField(source='reward.name', read_only=True)
+    rarity = serializers.CharField(source='reward.get_rarity_display', read_only=True)
+
+    class Meta:
+        model = FarmDrop
+        fields = ['reward', 'reward_name', 'rarity', 'quantity']
+
 
 class FarmEventSerializer(serializers.ModelSerializer):
+    drops = FarmDropSerializer(many=True, required=False)
+    total_drops = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = FarmEvent
-        fields = ['id', 'farm_type', 'source', 'date']
+        fields = ['id', 'farm_type', 'source', 'date', 'drops', 'total_drops']
 
     def validate(self, data):
         request = self.context.get('request')
@@ -27,4 +40,32 @@ class FarmEventSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         game_id = self.context['view'].kwargs.get('game_id')
         game = Game.objects.get(id=game_id)
-        return FarmEvent.objects.create(user=user, game=game, **validated_data)
+
+        drops_data = validated_data.pop('drops', [])
+        event = FarmEvent.objects.create(user=user, game=game, **validated_data)
+
+        # Crear drops (si se enviaron)
+        for drop_data in drops_data:
+            FarmDrop.objects.create(event=event, **drop_data)
+
+        return event
+
+class FarmRewardSerializer(serializers.ModelSerializer):
+    rarity_display = serializers.CharField(source='get_rarity_display', read_only=True)
+
+    class Meta:
+        model = FarmReward
+        fields = ['id', 'name', 'rarity', 'rarity_display']
+
+
+class FarmSourceSerializer(serializers.ModelSerializer):
+    rewards = FarmRewardSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = FarmSource
+        fields = ['id', 'name', 'location', 'source_type', 'rewards']    
+
+class GameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Game
+        fields = ['id', 'name']
