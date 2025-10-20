@@ -1,6 +1,13 @@
-from rest_framework import viewsets, permissions
-from .models import FarmEvent
-from .serializers import FarmEventSerializer, FarmSourceSerializer, GameSerializer
+from rest_framework import viewsets, permissions, generics
+from .models import FarmEvent, FarmReward, FarmSource
+from .serializers import (
+    FarmEventSerializer,
+    FarmDropSerializer,
+    FarmSourceSerializer,
+    FarmRewardSerializer,  # 👈 agrega esta línea
+    GameSerializer,
+)
+
 
 class FarmEventViewSet(viewsets.ModelViewSet):
     serializer_class = FarmEventSerializer
@@ -11,14 +18,15 @@ class FarmEventViewSet(viewsets.ModelViewSet):
         user = self.request.user
         return FarmEvent.objects.filter(user=user, game__id=game_id)
 
-class FarmSourceViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = FarmSourceSerializer
+# Listar las recompensas posibles de un jefe específico dentro de un juego
+class FarmSourceRewardsView(generics.ListAPIView):
+    serializer_class = FarmRewardSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         game_id = self.kwargs.get('game_id')
-        return FarmEvent.objects.filter(game__id=game_id, source__isnull=False)
-    
+        source_id = self.kwargs.get('source_id')
+        return FarmReward.objects.filter(source__id=source_id, source__game__id=game_id)
 
 class GameViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Game.objects.all()
