@@ -5,12 +5,10 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile'; // <- NUEVO
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
+import PasswordResetBySecret from './pages/ForgotPassword';
 import Stats from './pages/Stats';
 import GameView from './pages/Game';
 import GameChoose from './pages/GenshinOrWuWa';
-
 import FarmEventRegister from './pages/FarmEventForm';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -32,8 +30,7 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
             <Route path="/profile/edit" element={<PrivateRoute><EditProfile /></PrivateRoute>} /> {/* <- NUEVA */}
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/forgot-password" element={<PasswordResetBySecret />} />
 
             {/* Rutas del juego */}
             <Route path="/games/:gameId" element={<PrivateRoute><GameView /></PrivateRoute>} />

@@ -455,7 +455,7 @@
         "fields": {
             "name": "Valle de los Recuerdos",
             "location": "Mondstadt",
-            "source_type": "DOMINIO-ARTEFACTO",
+            "source_type": "DOMINIO-ART",
             "game": 1
         }
     },
@@ -464,7 +464,7 @@
         "fields": {
             "name": "Jardín de Cecilia",
             "location": "Mondstadt",
-            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "source_type": "DOMINIO-ARMA",
             "game": 1
         }
     },
@@ -473,7 +473,7 @@
         "fields": {
             "name": "Guarida del Lobo del Norte",
             "location": "Mondstadt",
-            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "source_type": "DOMINIO-TALENTO",
             "game": 1
         }
     },
@@ -482,7 +482,7 @@
         "fields": {
             "name": "Palacio Oculto de Lianshan",
             "location": "Liyue",
-            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "source_type": "DOMINIO-ARMA",
             "game": 1
         }
     },
@@ -491,7 +491,7 @@
         "fields": {
             "name": "Mansión Taishan",
             "location": "Liyue",
-            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "source_type": "DOMINIO-TALENTO",
             "game": 1
         }
     },
@@ -500,7 +500,7 @@
         "fields": {
             "name": "Cámara Oculta de Guyun",
             "location": "Liyue",
-            "source_type": "DOMINIO-ARTEFACTO",
+            "source_type": "DOMINIO-ART",
             "game": 1
         }
     },
@@ -509,7 +509,7 @@
         "fields": {
             "name": "Jardín del Veredicto",
             "location": "Inazuma",
-            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "source_type": "DOMINIO-ARMA",
             "game": 1
         }
     },
@@ -518,7 +518,7 @@
         "fields": {
             "name": "Corazón de la Flama",
             "location": "Inazuma",
-            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "source_type": "DOMINIO-TALENTO",
             "game": 1
         }
     },
@@ -527,7 +527,7 @@
         "fields": {
             "name": "Momiji-Dyed Court",
             "location": "Inazuma",
-            "source_type": "DOMINIO-ARTEFACTO",
+            "source_type": "DOMINIO-ART",
             "game": 1
         }
     },
@@ -536,7 +536,7 @@
         "fields": {
             "name": "Torre de la Ignorancia",
             "location": "Sumeru",
-            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "source_type": "DOMINIO-TALENTO",
             "game": 1
         }
     },
@@ -545,7 +545,7 @@
         "fields": {
             "name": "Estatua del Conflicto",
             "location": "Sumeru",
-            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "source_type": "DOMINIO-ARMA",
             "game": 1
         }
     },
@@ -554,7 +554,7 @@
         "fields": {
             "name": "Espacio del Alma",
             "location": "Sumeru",
-            "source_type": "DOMINIO-ARTEFACTO",
+            "source_type": "DOMINIO-ART",
             "game": 1
         }
     },
@@ -563,7 +563,7 @@
         "fields": {
             "name": "Ecos de las Mareas Profundas",
             "location": "Fontaine",
-            "source_type": "DOMINIO-ARTEFACTO",
+            "source_type": "DOMINIO-ART",
             "game": 1
         }
     },
@@ -572,7 +572,7 @@
         "fields": {
             "name": "Ecos del Maremoto",
             "location": "Fontaine",
-            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "source_type": "DOMINIO-ARMA",
             "game": 1
         }
     },
@@ -581,7 +581,7 @@
         "fields": {
             "name": "Catarata del Esplendor",
             "location": "Fontaine",
-            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "source_type": "DOMINIO-TALENTO",
             "game": 1
         }
     },
@@ -590,7 +590,7 @@
         "fields": {
             "name": "Ciudadela del Abismo Llameante",
             "location": "Natlan",
-            "source_type": "DOMINIO-ARTEFACTO",
+            "source_type": "DOMINIO-ART",
             "game": 1
         }
     },
@@ -599,7 +599,7 @@
         "fields": {
             "name": "Altar de las Llamas Antiguas",
             "location": "Natlan",
-            "source_type": "DOMINIO-MATERIAL-TALENTO",
+            "source_type": "DOMINIO-TALENTO",
             "game": 1
         }
     },
@@ -608,7 +608,7 @@
         "fields": {
             "name": "Sacro Juicio de la Llama",
             "location": "Natlan",
-            "source_type": "DOMINIO-MATERIAL-ARMA",
+            "source_type": "DOMINIO-ARMA",
             "game": 1
         }
     }

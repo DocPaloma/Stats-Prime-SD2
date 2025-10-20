@@ -1,10 +1,13 @@
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import WuWaDomainImg from "../assets/wuwa/WuWa-artifacts.jpeg";
 
 export default function GameView() {
   const { gameId } = useParams();
 
   const navigate = useNavigate();
+
+  
 
   return (
     <div className="p-6">
@@ -41,6 +44,15 @@ export default function GameView() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"/>
                     <span className="absolute bottom-2 left-3 text-white font-semibold text-sm">Dominios</span>
                 </button>
+
+                <button onClick={() => navigate("/farm-event/register")}
+                    className="group relative overflow-hidden border border-slate-700 hover:border-indigo-500
+                    transition-all duration-200 focus:outline-none rounded-x1 w-96 h-52 mr-4 mb-4">
+                        <img src={""}
+                        alt=""/>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"/>
+                    <span className="absolute bottom-2 left-3 text-white font-semibold text-sm">Hacer registro de farmeo</span>
+                </button>
             </section>)}
         {gameId === "wuthering" && (
             <section>
@@ -70,10 +82,19 @@ export default function GameView() {
                 onClick={() => navigate("/games/wuthering/domains")}
                 className="group relative overflow-hidden border border-slate-700 hover:border-indigo-500
                     transition-all duration-200 focus:outline-none rounded-x1 w-96 h-52 mr-4 mb-4">
-                    <img src="https://static.wikia.nocookie.net/wutheringwaves/images/1/1c/Forgery_Challenge.png/revision/latest?cb=20250114042037"
+                    <img src={WuWaDomainImg}
                     alt="Domains WuWa"/>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"/>
                     <span className="absolute bottom-2 left-3 text-white font-semibold text-sm">Dominios</span>
+                </button>
+
+                <button onClick={() => navigate("/farm-event/register")}
+                    className="group relative overflow-hidden border border-slate-700 hover:border-indigo-500
+                    transition-all duration-200 focus:outline-none rounded-x1 w-96 h-52 mr-4 mb-4">
+                        <img src=""
+                        alt=""/>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"/>
+                    <span className="absolute bottom-2 left-3 text-white font-semibold text-sm"></span>
                 </button>
             </section>)}
         {gameId === "warframe" && (

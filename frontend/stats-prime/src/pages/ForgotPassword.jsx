@@ -7,7 +7,7 @@ import authApi from "../api/authApi";
 
 export default function PasswordResetBySecret() {
   const [step, setStep] = useState(1); // 1 = pedir identificador, 2 = responder pregunta
-  const [identifier, setIdentifier] = useState("");
+  const [username, setUsername] = useState("");
   const [secretQuestion, setSecretQuestion] = useState("");
   const [form, setForm] = useState({ answer: "", new_password: "", confirm: "" });
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function PasswordResetBySecret() {
     setError("");
     setSuccess("");
 
-    if (!identifier.trim()) {
+    if (!username.trim()) {
       setError("Debes ingresar tu usuario o correo.");
       return;
     }
@@ -85,7 +85,7 @@ export default function PasswordResetBySecret() {
               <Label>Usuario o correo</Label>
               <Input
                 value={username}
-                onChange={(e) => setIdentifier(e.target.value)}
+                onChange={(e) => setUsername(e.target.value)}
                 placeholder="Ej: player1 o ejemplo@correo.com"
                 required
               />
@@ -154,3 +154,4 @@ export default function PasswordResetBySecret() {
     </section>
   );
 }
+
