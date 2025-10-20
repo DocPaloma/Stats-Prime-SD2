@@ -10,6 +10,7 @@ import Stats from './pages/Stats';
 import GameView from './pages/Game';
 import GameChoose from './pages/GenshinOrWuWa';
 import FarmEventRegister from './pages/FarmEventForm';
+import Footer from './components/Footer';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 function PrivateRoute({ children }) {
@@ -45,6 +46,7 @@ export default function App() {
 
           </Routes>
         </main>
+        <Footer />
       </div>
     </AuthProvider>
   );

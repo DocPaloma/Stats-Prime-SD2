@@ -48,8 +48,8 @@ export default function GameView() {
                 <button onClick={() => navigate("/farm-event/register")}
                     className="group relative overflow-hidden border border-slate-700 hover:border-indigo-500
                     transition-all duration-200 focus:outline-none rounded-x1 w-96 h-52 mr-4 mb-4">
-                        <img src={""}
-                        alt=""/>
+                        <img src={"https://i.blogs.es/df8d58/artefacto_flor_del_entrelazamiento/450_1000.webp"}
+                        alt="Registro de farmeos genshin"/>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"/>
                     <span className="absolute bottom-2 left-3 text-white font-semibold text-sm">Hacer registro de farmeo</span>
                 </button>
@@ -91,8 +91,8 @@ export default function GameView() {
                 <button onClick={() => navigate("/farm-event/register")}
                     className="group relative overflow-hidden border border-slate-700 hover:border-indigo-500
                     transition-all duration-200 focus:outline-none rounded-x1 w-96 h-52 mr-4 mb-4">
-                        <img src=""
-                        alt=""/>
+                        <img src="https://static0.thegamerimages.com/wordpress/wp-content/uploads/2024/05/wuthering-waves-dreamless-echo-screen.jpg?w=1600&h=1200&fit=crop"
+                        alt="Registro de eventos de farm"/>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"/>
                     <span className="absolute bottom-2 left-3 text-white font-semibold text-sm"></span>
                 </button>
